@@ -1,4 +1,4 @@
-Turbo Assembler	 Version 2.0	    03/17/19 17:03:04	    Page 1
+Turbo Assembler	 Version 2.0	    03/17/19 19:18:04	    Page 1
 pract2.asm
 
 
@@ -10,8 +10,8 @@ pract2.asm
       5				     ;**************************************************************************
       6				     ; DEFINICION DEL SEGMENTO DE DATOS
       7	0000			     DATOS SEGMENT
-      8	0000  02 FD 01 FD 05 07	01+	     MATRIZ DB 2, -3, 1, -3, 5,	7, 1, 7, -1
-      9	      07 FF
+      8	0000  01 00 00 00 FF 00	00+	     MATRIZ DB 1, 0, 0,	0, -1, 0, 0, 0,	-11
+      9	      00 F5
      10	0009  1B 5B 32 4A 24		     CLR_PANT	     DB	     1BH,"[2","J$"
      11	000E  1B 5B 31 34 3B 32	66+	     DET_LIN_SUP     DB	     1BH,"[14;2f      $"
      12	      20 20 20 20 20 20	24
@@ -60,7 +60,7 @@ pract2.asm
      55
      56	0012  B4 09			     MOV AH, 9h	     ; BORRA LA	PANTALLA
      57	0014  BA 0009r			     MOV DX, OFFSET CLR_PANT
-Turbo Assembler	 Version 2.0	    03/17/19 17:03:04	    Page 2
+Turbo Assembler	 Version 2.0	    03/17/19 19:18:04	    Page 2
 pract2.asm
 
 
@@ -122,7 +122,7 @@ pract2.asm
     112	006D  B4 02			     MOV AH, 2h
     113	006F  B2 7C			     MOV DL, '|'
     114	0071  CD 21			     INT 21H
-Turbo Assembler	 Version 2.0	    03/17/19 17:03:04	    Page 3
+Turbo Assembler	 Version 2.0	    03/17/19 19:18:04	    Page 3
 pract2.asm
 
 
@@ -184,7 +184,7 @@ pract2.asm
     169	00CB  E8 00E2			     CALL DIGITS_ASCII
     170
     171	00CE  B4 09			     MOV AH, 9h
-Turbo Assembler	 Version 2.0	    03/17/19 17:03:04	    Page 4
+Turbo Assembler	 Version 2.0	    03/17/19 19:18:04	    Page 4
 pract2.asm
 
 
@@ -246,7 +246,7 @@ pract2.asm
     226
     227				     ;_______________________________________________________________
     228				     ; SUBRUTINA PARA CALCULAR EL DETERMINANTE DE UNA MATRIZ
-Turbo Assembler	 Version 2.0	    03/17/19 17:03:04	    Page 5
+Turbo Assembler	 Version 2.0	    03/17/19 19:18:04	    Page 5
 pract2.asm
 
 
@@ -308,7 +308,7 @@ pract2.asm
     283	0187  88 A5 0039r		     MOV TEMP[DI], AH
     284
     285	018B  3C 00			     CMP AL, 0
-Turbo Assembler	 Version 2.0	    03/17/19 17:03:04	    Page 6
+Turbo Assembler	 Version 2.0	    03/17/19 19:18:04	    Page 6
 pract2.asm
 
 
@@ -358,7 +358,7 @@ pract2.asm
     328	01B0  8B 36 0057r		     MOV SI, [NUM_DIG]
     329	01B4  BF 0001			     MOV DI, 1
     330	01B7  8A 16 0038r		     MOV DL, SIGNO
-    331	01BB  88 16 004Er		     MOV TEXTO[1], DL
+    331	01BB  88 16 004Dr		     MOV TEXTO[0], DL
     332	01BF			     BUCLE:
     333	01BF  8A 84 0039r		     MOV AL, TEMP[SI]
     334	01C3  04 30			     ADD AL, 30h
@@ -370,7 +370,7 @@ pract2.asm
     340	01CD  C6 85 004Dr 24		     MOV TEXTO[DI], "$"
     341	01D2  C3			     RET
     342
-Turbo Assembler	 Version 2.0	    03/17/19 17:03:04	    Page 7
+Turbo Assembler	 Version 2.0	    03/17/19 19:18:04	    Page 7
 pract2.asm
 
 
@@ -382,7 +382,7 @@ pract2.asm
     347	01D3			     CODE ENDS
     348				     ; FIN DEL PROGRAMA	INDICANDO DONDE	COMIENZA LA EJECUCION
     349				     END INICIO
-Turbo Assembler	 Version 2.0	    03/17/19 17:03:04	    Page 8
+Turbo Assembler	 Version 2.0	    03/17/19 19:18:04	    Page 8
 Symbol Table
 
 
@@ -392,7 +392,7 @@ Symbol Name			  Type	 Value
 
 ??DATE				  Text	 "03/17/19"
 ??FILENAME			  Text	 "pract2  "
-??TIME				  Text	 "17:03:03"
+??TIME				  Text	 "19:18:04"
 ??VERSION			  Number 0200
 @CPU				  Text	 0101H
 @CURSEG				  Text	 CODE
