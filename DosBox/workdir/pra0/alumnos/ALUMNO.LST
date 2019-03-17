@@ -1,0 +1,198 @@
+Turbo Assembler	 Version 2.0	    02/15/19 18:16:04	    Page 1
+alumno.asm
+
+
+
+      1				     ;_______________________________________________________________
+      2				     ; DEFINICION DEL SEGMENTO DE DATOS
+      3	0000			     DATOS SEGMENT
+      4	0000  1B 5B 32 4A 24		     CLR_PANT	     DB	     1BH,"[2","J$"
+      5	0005  1B 34 3B 32 37 66	54+	     CUR_MICRO	     DB	     1BH,"4;27fTECNOLOGIA DE COMPUTADORES$"
+      6	      45 43 4E 4F 4C 4F	47+
+      7	      49 41 20 44 45 20	43+
+      8	      4F 4D 50 55 54 41	44+
+      9	      4F 52 45 53 24
+     10	0026  1B 5B 31 35 3B 31	66+	     PREG_NOM	     DB	     1BH,"[15;1fESCRIBE	TU NOMBRE ? $"
+     11	      45 53 43 52 49 42	45+
+     12	      20 54 55 20 4E 4F	4D+
+     13	      42 52 45 20 3F 20	24
+     14	0042  1B 5B 31 36 3B 31	66+	     PREG_AP1	     DB	     1BH,"[16;1fESCRIBE	TU PRIMER APELLIDO ? $"
+     15	      45 53 43 52 49 42	45+
+     16	      20 54 55 20 50 52	49+
+     17	      4D 45 52 20 41 50	45+
+     18	      4C 4C 49 44 4F 20	3F+
+     19	      20 24
+     20	0067  1B 5B 31 37 3B 31	66+	     PREG_AP2	     DB	     1BH,"[17;1fESCRIBE	TU SEGUNDO APELLIDO ? $"
+     21	      45 53 43 52 49 42	45+
+     22	      20 54 55 20 53 45	47+
+     23	      55 4E 44 4F 20 41	50+
+     24	      45 4C 4C 49 44 4F	20+
+     25	      3F 20 24
+     26	008D  20 24			     SPACE	     DB	     " $"
+     27	008F  50*(00)			     NOMBRE	     DB	     80	DUP (0)
+     28	00DF  50*(00)			     AP1		     DB	     80	DUP (0)
+     29	012F  50*(00)			     AP2		     DB	     80	DUP (0)
+     30	017F  1B 5B 32 32 3B 31	66+	     TEXTO	     DB	     1BH,"[22;1fDON ","$"
+     31	      44 4F 4E 20 24
+     32	018B  20 45 53 20 41 4C	55+	     TEXTO2	     DB	     " ES ALUMNO DE 2º CURSO DE	"
+     33	      4D 4E 4F 20 44 45	20+
+     34	      32 BA 20 43 55 52	53+
+     35	      4F 20 44 45 20
+     36	01A5  49 4E 47 45 4E 49	45+			     DB	     "INGENIERIA INFORMATICA",13,10,"$"
+     37	      52 49 41 20 49 4E	46+
+     38	      4F 52 4D 41 54 49	43+
+     39	      41 0D 0A 24
+     40	01BE			     DATOS ENDS
+     41				     ;_______________________________________________________________
+     42				     ; DEFINICION DEL SEGMENTO DE PILA
+     43	0000			     PILA SEGMENT STACK	"STACK"
+     44	0000  40*(00)			     DB	40H DUP	(0)
+     45	0040			     PILA ENDS
+     46				     ;_______________________________________________________________
+     47				     ; DEFINICION DEL SEGMENTO DE CODIGO
+     48	0000			     CODE SEGMENT
+     49				     ASSUME CS:CODE,DS:DATOS,SS:PILA
+     50				     ; COMIENZO	DEL PROCEDIMIENTO PRINCIPAL (START)
+     51	0000			     START PROC	FAR
+     52				     ;INICIALIZACION DE	LOS REGISTROS DE SEGMENTO
+     53	0000  B8 0000s			     MOV AX,DATOS
+     54	0003  8E D8			     MOV DS,AX	     ;FIN DE LAS INICIALIZACIONES
+     55
+     56	0005  B4 09			     MOV AH,9	     ; BORRA LA	PANTALLA
+     57	0007  BA 0000r			     MOV DX, OFFSET CLR_PANT
+Turbo Assembler	 Version 2.0	    02/15/19 18:16:04	    Page 2
+alumno.asm
+
+
+
+     58	000A  CD 21			     INT 21H
+     59
+     60	000C  BA 0005r			     MOV DX,OFFSET CUR_MICRO	     ;ESCRIBE "CURSO ...
+     61	000F  CD 21			     INT 21H
+     62
+     63	0011  BA 0026r			     MOV DX,OFFSET PREG_NOM	     ;MUESTRA "ESCRIBE ...
+     64	0014  CD 21			     INT 21H
+     65
+     66	0016  B4 0A			     MOV AH,0AH			     ;ALMACENA EL NOMBRE TECLEADO
+     67	0018  BA 008Fr			     MOV DX,OFFSET NOMBRE
+     68
+     69	001B  C6 06 008Fr 3C		     MOV NOMBRE[0],60		     ;MAXIMO NUMERO DE CARACTERES
+     70	0020  CD 21			     INT 21H
+     71
+     72	0022  B4 09			     MOV AH,9
+     73	0024  BA 0042r			     MOV DX,OFFSET PREG_AP1	     ;MUESTRA "ESCRIBE ...
+     74	0027  CD 21			     INT 21H
+     75
+     76	0029  B4 0A			     MOV AH,0AH			     ;ALMACENA EL PRIMER APELLIDO TECLEADO
+     77	002B  BA 00DFr			     MOV DX,OFFSET AP1
+     78
+     79	002E  C6 06 00DFr 3C		     MOV AP1[0],60	     ;MAXIMO NUMERO DE CARACTERES
+     80	0033  CD 21			     INT 21H
+     81
+     82	0035  B4 09			     MOV AH,9
+     83	0037  BA 0067r			     MOV DX,OFFSET PREG_AP2	     ;MUESTRA "ESCRIBE ...
+     84	003A  CD 21			     INT 21H
+     85
+     86	003C  B4 0A			     MOV AH,0AH			     ;ALMACENA EL SEGUNDO APELLIDO TECLEADO
+     87	003E  BA 012Fr			     MOV DX,OFFSET AP2
+     88
+     89	0041  C6 06 012Fr 3C		     MOV AP2[0],60	     ;MAXIMO NUMERO DE CARACTERES
+     90	0046  CD 21			     INT 21H
+     91
+     92	0048  B4 09			     MOV AH,9			     ;ESCRIBE "DON ...
+     93	004A  BA 017Fr			     MOV DX, OFFSET TEXTO
+     94	004D  CD 21			     INT 21H
+     95
+     96	004F  BB 0000		     MOV BX,0
+     97	0052			     OTRO:
+     98	0052  8A 97 0091r		     MOV DL,NOMBRE[BX+2]	     ;ESCRIBIR UN CARACTER DEL NOMBRE
+     99	0056  B4 02			     MOV AH,2
+    100	0058  CD 21			     INT 21H
+    101
+    102	005A  43			     INC BX
+    103	005B  3A 1E 0090r		     CMP BL, NOMBRE[1]		     ;COMPARA CON EL NUMERO DE CARACTERES
+    104	005F  75 F1			     JNE OTRO
+    105
+    106	0061  BA 008Dr		     MOV DX, OFFSET SPACE
+    107	0064  B4 09		     MOV AH,9
+    108	0066  CD 21		     INT 21H
+    109
+    110	0068  BB 0000		     MOV BX,0
+    111	006B			     OTRO1:
+    112	006B  8A 97 00E1r		     MOV DL,AP1[BX+2]		     ;ESCRIBIR UN CARACTER DEL PRIMER APELLIDO
+    113	006F  B4 02			     MOV AH,2
+    114	0071  CD 21			     INT 21H
+Turbo Assembler	 Version 2.0	    02/15/19 18:16:04	    Page 3
+alumno.asm
+
+
+
+    115
+    116	0073  43			     INC BX
+    117	0074  3A 1E 00E0r		     CMP BL, AP1[1]		     ;COMPARA CON EL NUMERO DE CARACTERES
+    118	0078  75 F1			     JNE OTRO1
+    119
+    120	007A  BA 008Dr		     MOV DX, OFFSET SPACE
+    121	007D  B4 09		     MOV AH,9
+    122	007F  CD 21		     INT 21H
+    123
+    124	0081  BB 0000		     MOV BX,0
+    125	0084			     OTRO2:
+    126	0084  8A 97 0131r		     MOV DL,AP2[BX+2]		     ;ESCRIBIR UN CARACTER DEL SEGUNDO APELLIDO
+    127	0088  B4 02			     MOV AH,2
+    128	008A  CD 21			     INT 21H
+    129
+    130	008C  43			     INC BX
+    131	008D  3A 1E 0130r		     CMP BL, AP2[1]		     ;COMPARA CON EL NUMERO DE CARACTERES
+    132	0091  75 F1			     JNE OTRO2
+    133
+    134
+    135	0093  BA 018Br			     MOV DX, OFFSET TEXTO2	     ; ESCRIBE "ES ALUMNO ...
+    136	0096  B4 09			     MOV AH,9
+    137	0098  CD 21			     INT 21H
+    138
+    139	009A  B8 4C00			     MOV AX,4C00H		     ; FIN DE PROGRAMA Y VUELTA	AL DOS
+    140	009D  CD 21			     INT 21H
+    141	009F			     START ENDP
+    142				     ;FIN DEL SEGMENTO DE CODIGO
+    143	009F			     CODE ENDS
+    144				     ;FIN DE PROGRAMA INDICANDO	DONDE COMIENZA LA EJECUCION
+    145				     END START
+Turbo Assembler	 Version 2.0	    02/15/19 18:16:04	    Page 4
+Symbol Table
+
+
+
+
+Symbol Name			  Type	 Value
+
+??DATE				  Text	 "02/15/19"
+??FILENAME			  Text	 "alumno  "
+??TIME				  Text	 "18:16:04"
+??VERSION			  Number 0200
+@CPU				  Text	 0101H
+@CURSEG				  Text	 CODE
+@FILENAME			  Text	 ALUMNO
+@WORDSIZE			  Text	 2
+AP1				  Byte	 DATOS:00DF
+AP2				  Byte	 DATOS:012F
+CLR_PANT			  Byte	 DATOS:0000
+CUR_MICRO			  Byte	 DATOS:0005
+NOMBRE				  Byte	 DATOS:008F
+OTRO				  Near	 CODE:0052
+OTRO1				  Near	 CODE:006B
+OTRO2				  Near	 CODE:0084
+PREG_AP1			  Byte	 DATOS:0042
+PREG_AP2			  Byte	 DATOS:0067
+PREG_NOM			  Byte	 DATOS:0026
+SPACE				  Byte	 DATOS:008D
+START				  Far	 CODE:0000
+TEXTO				  Byte	 DATOS:017F
+TEXTO2				  Byte	 DATOS:018B
+
+Groups & Segments		  Bit Size Align  Combine Class
+
+CODE				  16  009F Para	  none
+DATOS				  16  01BE Para	  none
+PILA				  16  0040 Para	  Stack	  STACK
+

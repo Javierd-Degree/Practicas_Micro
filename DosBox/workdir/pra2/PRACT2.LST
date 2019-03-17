@@ -1,0 +1,430 @@
+Turbo Assembler	 Version 2.0	    03/17/19 17:03:04	    Page 1
+pract2.asm
+
+
+
+      1				     ;**************************************************************************
+      2				     ; SBM 2019. Programa pract1a.asm
+      3				     ; Grupo 2301
+      4				     ; Javier Delgado del Cerro	y Javier López	Cano
+      5				     ;**************************************************************************
+      6				     ; DEFINICION DEL SEGMENTO DE DATOS
+      7	0000			     DATOS SEGMENT
+      8	0000  02 FD 01 FD 05 07	01+	     MATRIZ DB 2, -3, 1, -3, 5,	7, 1, 7, -1
+      9	      07 FF
+     10	0009  1B 5B 32 4A 24		     CLR_PANT	     DB	     1BH,"[2","J$"
+     11	000E  1B 5B 31 34 3B 32	66+	     DET_LIN_SUP     DB	     1BH,"[14;2f      $"
+     12	      20 20 20 20 20 20	24
+     13	001C  1B 5B 31 35 3B 32	66+	     DET_LINEA	     DB	     1BH,"[15;2f|A| = $"
+     14	      7C 41 7C 20 3D 20	24
+     15	002A  1B 5B 31 36 3B 32	66+	     DET_LIN_INF     DB	     1BH,"[16;2f      $"
+     16	      20 20 20 20 20 20	24
+     17
+     18	0038  ??			     SIGNO	     DB	     ?
+     19
+     20	0039  14*(??)			     TEMP	     DB	     20	DUP(?)
+     21	004D  0A*(??)			     TEXTO	     DB	     10	dup (?)
+     22	0057  ????			     NUM_DIG	     DW	     ?
+     23
+     24	0059  20 24			     SPACE	     DB	     " $"
+     25	005B			     DATOS ENDS
+     26
+     27				     ;**************************************************************************
+     28				     ; DEFINICION DEL SEGMENTO DE PILA
+     29	0000			     PILA SEGMENT STACK	"STACK"
+     30	0000  40*(00)			     DB	40H DUP	(0) ;ejemplo de	inicialización, 64 bytes inicializados	a 0
+     31	0040			     PILA ENDS
+     32
+     33				     ;**************************************************************************
+     34				     ; DEFINICION DEL SEGMENTO EXTRA
+     35	0000			     EXTRA SEGMENT
+     36	0000  0000 0000			     RESULT DW 0,0 ;ejemplo de inicialización.	2 PALABRAS (4 BYTES)
+     37	0004			     EXTRA ENDS
+     38
+     39				     ;**************************************************************************
+     40				     ; DEFINICION DEL SEGMENTO DE CODIGO
+     41	0000			     CODE SEGMENT
+     42				     ASSUME CS:	CODE, DS: DATOS, ES: EXTRA, SS:	PILA
+     43				     ; COMIENZO	DEL PROCEDIMIENTO PRINCIPAL
+     44	0000			     INICIO PROC
+     45					     ; INICIALIZA LOS REGISTROS	DE SEGMENTO CON	SU VALOR
+     46	0000  B8 0000s			     MOV AX, DATOS
+     47	0003  8E D8			     MOV DS, AX
+     48	0005  B8 0000s			     MOV AX, PILA
+     49	0008  8E D0			     MOV SS, AX
+     50	000A  B8 0000s			     MOV AX, EXTRA
+     51	000D  8E C0			     MOV ES, AX
+     52	000F  BC 0040			     MOV SP, 64	; CARGA	EL PUNTERO DE PILA CON EL VALOR	MAS ALTO
+     53					     ; FIN DE LAS INICIALIZACIONES
+     54					     ; COMIENZO	DEL PROGRAMA
+     55
+     56	0012  B4 09			     MOV AH, 9h	     ; BORRA LA	PANTALLA
+     57	0014  BA 0009r			     MOV DX, OFFSET CLR_PANT
+Turbo Assembler	 Version 2.0	    03/17/19 17:03:04	    Page 2
+pract2.asm
+
+
+
+     58	0017  CD 21			     INT 21H
+     59
+     60					     ;;; IMPRIMIMOS LA LINEA SUPERIOR
+     61	0019  BA 000Er			     MOV DX, OFFSET DET_LIN_SUP
+     62	001C  CD 21			     INT 21H
+     63
+     64	001E  B4 02			     MOV AH, 2h
+     65	0020  B2 7C			     MOV DL, '|'
+     66	0022  CD 21			     INT 21H
+     67
+     68					     ; Primer numero
+     69	0024  A0 0000r			     MOV AL, MATRIZ[0]
+     70	0027  E8 0178			     CALL NUM_8_DIGITS
+     71	002A  E8 0183			     CALL DIGITS_ASCII
+     72
+     73	002D  B4 09			     MOV AH, 9h
+     74	002F  BA 004Dr			     MOV DX, OFFSET TEXTO
+     75	0032  CD 21			     INT 21H
+     76
+     77	0034  B4 02			     MOV AH, 2h
+     78	0036  B2 20			     MOV DL, ' '
+     79	0038  CD 21			     INT 21H
+     80
+     81					     ; Segundo numero
+     82	003A  A0 0001r			     MOV AL, MATRIZ[1]
+     83	003D  E8 0162			     CALL NUM_8_DIGITS
+     84	0040  E8 016D			     CALL DIGITS_ASCII
+     85
+     86	0043  B4 09			     MOV AH, 9h
+     87	0045  BA 004Dr			     MOV DX, OFFSET TEXTO
+     88	0048  CD 21			     INT 21H
+     89
+     90	004A  B4 02			     MOV AH, 2h
+     91	004C  B2 20			     MOV DL, ' '
+     92	004E  CD 21			     INT 21H
+     93
+     94					     ; Tercer numero
+     95	0050  A0 0002r			     MOV AL, MATRIZ[2]
+     96	0053  E8 014C			     CALL NUM_8_DIGITS
+     97	0056  E8 0157			     CALL DIGITS_ASCII
+     98
+     99	0059  B4 09			     MOV AH, 9h
+    100	005B  BA 004Dr			     MOV DX, OFFSET TEXTO
+    101	005E  CD 21			     INT 21H
+    102
+    103	0060  B4 02			     MOV AH, 2h
+    104	0062  B2 7C			     MOV DL, '|'
+    105	0064  CD 21			     INT 21H
+    106
+    107					     ;;; IMPRIMIMOS LA LINEA CENTRAL
+    108	0066  B4 09			     MOV AH, 9h
+    109	0068  BA 001Cr			     MOV DX,OFFSET DET_LINEA
+    110	006B  CD 21			     INT 21H
+    111
+    112	006D  B4 02			     MOV AH, 2h
+    113	006F  B2 7C			     MOV DL, '|'
+    114	0071  CD 21			     INT 21H
+Turbo Assembler	 Version 2.0	    03/17/19 17:03:04	    Page 3
+pract2.asm
+
+
+
+    115
+    116					     ; Primer numero
+    117	0073  A0 0003r			     MOV AL, MATRIZ[3]
+    118	0076  E8 0129			     CALL NUM_8_DIGITS
+    119	0079  E8 0134			     CALL DIGITS_ASCII
+    120
+    121	007C  B4 09			     MOV AH, 9h
+    122	007E  BA 004Dr			     MOV DX, OFFSET TEXTO
+    123	0081  CD 21			     INT 21H
+    124
+    125	0083  B4 02			     MOV AH, 2h
+    126	0085  B2 20			     MOV DL, ' '
+    127	0087  CD 21			     INT 21H
+    128
+    129					     ; Segundo numero
+    130	0089  A0 0004r			     MOV AL, MATRIZ[4]
+    131	008C  E8 0113			     CALL NUM_8_DIGITS
+    132	008F  E8 011E			     CALL DIGITS_ASCII
+    133
+    134	0092  B4 09			     MOV AH, 9h
+    135	0094  BA 004Dr			     MOV DX, OFFSET TEXTO
+    136	0097  CD 21			     INT 21H
+    137
+    138	0099  B4 02			     MOV AH, 2h
+    139	009B  B2 20			     MOV DL, ' '
+    140	009D  CD 21			     INT 21H
+    141
+    142					     ; Tercer numero
+    143	009F  A0 0005r			     MOV AL, MATRIZ[5]
+    144	00A2  E8 00FD			     CALL NUM_8_DIGITS
+    145	00A5  E8 0108			     CALL DIGITS_ASCII
+    146
+    147	00A8  B4 09			     MOV AH, 9h
+    148	00AA  BA 004Dr			     MOV DX, OFFSET TEXTO
+    149	00AD  CD 21			     INT 21H
+    150
+    151	00AF  B4 02			     MOV AH, 2h
+    152	00B1  B2 7C			     MOV DL, '|'
+    153	00B3  CD 21			     INT 21H
+    154
+    155					     ; Resultado del determinante
+    156	00B5  B4 02			     MOV AH, 2h
+    157	00B7  B2 20			     MOV DL, ' '
+    158	00B9  CD 21			     INT 21H
+    159
+    160	00BB  B2 3D			     MOV DL, '='
+    161	00BD  CD 21			     INT 21H
+    162
+    163	00BF  B2 20			     MOV DL, ' '
+    164	00C1  CD 21			     INT 21H
+    165
+    166	00C3  E8 0061			     CALL DETERMINANTE
+    167	00C6  8B C3			     MOV AX, BX
+    168	00C8  E8 00AB			     CALL NUM_DIGITS
+    169	00CB  E8 00E2			     CALL DIGITS_ASCII
+    170
+    171	00CE  B4 09			     MOV AH, 9h
+Turbo Assembler	 Version 2.0	    03/17/19 17:03:04	    Page 4
+pract2.asm
+
+
+
+    172	00D0  BA 004Dr			     MOV DX, OFFSET TEXTO
+    173	00D3  CD 21			     INT 21H
+    174
+    175					     ;;; IMPRIMIMOS LA LINEA INFERIOR
+    176	00D5  BA 002Ar			     MOV DX, OFFSET DET_LIN_INF
+    177	00D8  CD 21			     INT 21H
+    178
+    179	00DA  B4 02			     MOV AH, 2h
+    180	00DC  B2 7C			     MOV DL, '|'
+    181	00DE  CD 21			     INT 21H
+    182
+    183					     ; Primer numero
+    184	00E0  A0 0006r			     MOV AL, MATRIZ[6]
+    185	00E3  E8 00BC			     CALL NUM_8_DIGITS
+    186	00E6  E8 00C7			     CALL DIGITS_ASCII
+    187
+    188	00E9  B4 09			     MOV AH, 9h
+    189	00EB  BA 004Dr			     MOV DX, OFFSET TEXTO
+    190	00EE  CD 21			     INT 21H
+    191
+    192	00F0  B4 02			     MOV AH, 2h
+    193	00F2  B2 20			     MOV DL, ' '
+    194	00F4  CD 21			     INT 21H
+    195
+    196					     ; Segundo numero
+    197	00F6  A0 0007r			     MOV AL, MATRIZ[7]
+    198	00F9  E8 00A6			     CALL NUM_8_DIGITS
+    199	00FC  E8 00B1			     CALL DIGITS_ASCII
+    200
+    201	00FF  B4 09			     MOV AH, 9h
+    202	0101  BA 004Dr			     MOV DX, OFFSET TEXTO
+    203	0104  CD 21			     INT 21H
+    204
+    205	0106  B4 02			     MOV AH, 2h
+    206	0108  B2 20			     MOV DL, ' '
+    207	010A  CD 21			     INT 21H
+    208
+    209					     ; Tercer numero
+    210	010C  A0 0008r			     MOV AL, MATRIZ[8]
+    211	010F  E8 0090			     CALL NUM_8_DIGITS
+    212	0112  E8 009B			     CALL DIGITS_ASCII
+    213
+    214	0115  B4 09			     MOV AH, 9h
+    215	0117  BA 004Dr			     MOV DX, OFFSET TEXTO
+    216	011A  CD 21			     INT 21H
+    217
+    218	011C  B4 02			     MOV AH, 2h
+    219	011E  B2 7C			     MOV DL, '|'
+    220	0120  CD 21			     INT 21H
+    221
+    222					     ; FIN DEL PROGRAMA
+    223	0122  B8 4C00			     MOV AX, 4C00h
+    224	0125  CD 21			     INT 21h
+    225	0127			     INICIO ENDP
+    226
+    227				     ;_______________________________________________________________
+    228				     ; SUBRUTINA PARA CALCULAR EL DETERMINANTE DE UNA MATRIZ
+Turbo Assembler	 Version 2.0	    03/17/19 17:03:04	    Page 5
+pract2.asm
+
+
+
+    229				     ; 3x3 CON NUMEROS DE 5bits	con signo
+    230				     ; SALIDA BX
+    231				     ;_______________________________________________________________
+    232
+    233	0127			     DETERMINANTE PROC NEAR
+    234					 ;;;Sumamos las	tres lineas
+    235	0127  A0 0000r			     MOV AL, MATRIZ
+    236	012A  F6 2E 0004r		     IMUL MATRIZ[4]
+    237	012E  F6 2E 0008r		     IMUL MATRIZ[8]
+    238	0132  8B D8			     MOV BX, AX
+    239
+    240	0134  A0 0001r			     MOV AL, MATRIZ[1]
+    241	0137  F6 2E 0005r		     IMUL MATRIZ[5]
+    242	013B  F6 2E 0006r		     IMUL MATRIZ[6]
+    243	013F  03 D8			     ADD BX, AX
+    244
+    245	0141  A0 0002r			     MOV AL, MATRIZ[2]
+    246	0144  F6 2E 0003r		     IMUL MATRIZ[3]
+    247	0148  F6 2E 0007r		     IMUL MATRIZ[7]
+    248	014C  03 D8			     ADD BX, AX
+    249
+    250					     ;;; Restamos las otras tres lineas
+    251	014E  A0 0002r			     MOV AL, MATRIZ[2]
+    252	0151  F6 2E 0004r		     IMUL MATRIZ[4]
+    253	0155  F6 2E 0006r		     IMUL MATRIZ[6]
+    254	0159  2B D8			     SUB BX, AX
+    255
+    256	015B  A0 0000r			     MOV AL, MATRIZ
+    257	015E  F6 2E 0005r		     IMUL MATRIZ[5]
+    258	0162  F6 2E 0007r		     IMUL MATRIZ[7]
+    259	0166  2B D8			     SUB BX, AX
+    260
+    261	0168  A0 0001r			     MOV AL, MATRIZ[1]
+    262	016B  F6 2E 0003r		     IMUL MATRIZ[3]
+    263	016F  F6 2E 0008r		     IMUL MATRIZ[8]
+    264	0173  2B D8			     SUB BX, AX
+    265	0175  C3			 RET
+    266	0176			     DETERMINANTE ENDP
+    267
+    268				     ;_______________________________________________________________
+    269				     ; SUBRUTINA PARA OBTENER LOS DIGITOS Y EL SIGNO DE	UN
+    270				     ; NUMERO DE 2 Bytes
+    271				     ; ENTRADA AX
+    272				     ; SALIDA TEMP, SIGNO Y NUM_DIG
+    273				     ;_______________________________________________________________
+    274	0176			     NUM_DIGITS	PROC NEAR
+    275	0176  BF 0000			     MOV DI, 0
+    276	0179  B2 0A			     MOV DL, 10
+    277	017B  05 0000			     ADD AX, 0
+    278	017E  78 19			     JS	     NEGATIVO
+    279	0180  C6 06 0038r 20		     MOV SIGNO,	" "
+    280
+    281	0185			     COMUN:
+    282	0185  F6 F2			     DIV DL
+    283	0187  88 A5 0039r		     MOV TEMP[DI], AH
+    284
+    285	018B  3C 00			     CMP AL, 0
+Turbo Assembler	 Version 2.0	    03/17/19 17:03:04	    Page 6
+pract2.asm
+
+
+
+    286	018D  74 05			     JZ	FIN
+    287	018F  B4 00			     MOV AH, 0
+    288	0191  47			     INC DI
+    289	0192  EB F1			     JMP COMUN
+    290
+    291	0194			     FIN:
+    292	0194  89 3E 0057r		     MOV NUM_DIG, DI
+    293	0198  C3			     RET
+    294
+    295	0199			     NEGATIVO:
+    296	0199  C6 06 0038r 2D		     MOV SIGNO,	"-"
+    297	019E  F7 D8			     NEG AX
+    298	01A0  EB E3			     JMP COMUN
+    299	01A2			     NUM_DIGITS	ENDP
+    300
+    301				     ;_______________________________________________________________
+    302				     ; SUBRUTINA PARA OBTENER LOS DIGITOS Y EL SIGNO DE	UN
+    303				     ; NUMERO DE 1 Byte
+    304				     ; ENTRADA AL
+    305				     ; SALIDA TEMP, SIGNO Y NUM_DIG
+    306				     ;_______________________________________________________________
+    307	01A2			     NUM_8_DIGITS PROC NEAR
+    308	01A2  04 00			     ADD AL, 0
+    309	01A4  78 06			     JS	     NEGATIVO_8
+    310	01A6  B4 00			     MOV AH, 0
+    311
+    312	01A8			     COMUN_8:
+    313	01A8  E8 FFCB			     CALL NUM_DIGITS
+    314	01AB  C3			     RET
+    315
+    316	01AC			     NEGATIVO_8:
+    317	01AC  B4 FF			     MOV AH, -1
+    318	01AE  EB F8			     JMP COMUN_8
+    319	01B0			     NUM_8_DIGITS ENDP
+    320
+    321				     ;_______________________________________________________________
+    322				     ; SUBRUTINA PARA OBTENER EL CODIGO	ASCII A	PARTIR DE SU
+    323				     ; SIGNO Y DIGITOS
+    324				     ; ENTRADA SIGNO, TEMP, NUM_DIG
+    325				     ; SALIDA TEXTO
+    326				     ;_______________________________________________________________
+    327	01B0			     DIGITS_ASCII PROC NEAR
+    328	01B0  8B 36 0057r		     MOV SI, [NUM_DIG]
+    329	01B4  BF 0001			     MOV DI, 1
+    330	01B7  8A 16 0038r		     MOV DL, SIGNO
+    331	01BB  88 16 004Er		     MOV TEXTO[1], DL
+    332	01BF			     BUCLE:
+    333	01BF  8A 84 0039r		     MOV AL, TEMP[SI]
+    334	01C3  04 30			     ADD AL, 30h
+    335	01C5  88 85 004Dr		     MOV TEXTO[DI], AL
+    336
+    337	01C9  47			     INC DI
+    338	01CA  4E			     DEC SI
+    339	01CB  79 F2			     JNS BUCLE
+    340	01CD  C6 85 004Dr 24		     MOV TEXTO[DI], "$"
+    341	01D2  C3			     RET
+    342
+Turbo Assembler	 Version 2.0	    03/17/19 17:03:04	    Page 7
+pract2.asm
+
+
+
+    343	01D3			     DIGITS_ASCII ENDP
+    344
+    345
+    346				     ; FIN DEL SEGMENTO	DE CODIGO
+    347	01D3			     CODE ENDS
+    348				     ; FIN DEL PROGRAMA	INDICANDO DONDE	COMIENZA LA EJECUCION
+    349				     END INICIO
+Turbo Assembler	 Version 2.0	    03/17/19 17:03:04	    Page 8
+Symbol Table
+
+
+
+
+Symbol Name			  Type	 Value
+
+??DATE				  Text	 "03/17/19"
+??FILENAME			  Text	 "pract2  "
+??TIME				  Text	 "17:03:03"
+??VERSION			  Number 0200
+@CPU				  Text	 0101H
+@CURSEG				  Text	 CODE
+@FILENAME			  Text	 PRACT2
+@WORDSIZE			  Text	 2
+BUCLE				  Near	 CODE:01BF
+CLR_PANT			  Byte	 DATOS:0009
+COMUN				  Near	 CODE:0185
+COMUN_8				  Near	 CODE:01A8
+DETERMINANTE			  Near	 CODE:0127
+DET_LINEA			  Byte	 DATOS:001C
+DET_LIN_INF			  Byte	 DATOS:002A
+DET_LIN_SUP			  Byte	 DATOS:000E
+DIGITS_ASCII			  Near	 CODE:01B0
+FIN				  Near	 CODE:0194
+INICIO				  Near	 CODE:0000
+MATRIZ				  Byte	 DATOS:0000
+NEGATIVO			  Near	 CODE:0199
+NEGATIVO_8			  Near	 CODE:01AC
+NUM_8_DIGITS			  Near	 CODE:01A2
+NUM_DIG				  Word	 DATOS:0057
+NUM_DIGITS			  Near	 CODE:0176
+RESULT				  Word	 EXTRA:0000
+SIGNO				  Byte	 DATOS:0038
+SPACE				  Byte	 DATOS:0059
+TEMP				  Byte	 DATOS:0039
+TEXTO				  Byte	 DATOS:004D
+
+Groups & Segments		  Bit Size Align  Combine Class
+
+CODE				  16  01D3 Para	  none
+DATOS				  16  005B Para	  none
+EXTRA				  16  0004 Para	  none
+PILA				  16  0040 Para	  Stack	  STACK
+
