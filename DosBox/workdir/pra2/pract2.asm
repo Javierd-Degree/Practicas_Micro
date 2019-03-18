@@ -7,17 +7,17 @@
 DATOS SEGMENT
 	MATRIZ 		DB 	11, -3, 1, -3, 5, 7, 1, 7, -1
 	CLR_PANT 	DB 	1BH,"[2","J$"
-	DET_LIN_SUP	DB	1BH,"[14;2f      $"
-	DET_LINEA 	DB 	1BH,"[15;2f|A| = $"
-	DET_LIN_INF	DB 	1BH,"[16;2f      $"
+
+	DET 		DB	6 dup(" "), "|             |", 13, 10, "|A| = |             | =     ", 13, 10, 6 dup(" "), "|             |", 13, 10, "$"
 
 	INTRO_NUM_F	DB	"INTRODUCE LOS NUMEROS DE LA MATRIZ UNO POR UNO", 13, 10, "$"
-	NUM_ERROR_F DB	"EL NUMERO INTRODUCIDO NO ES VALIDO. PRUEBA CON OTRO. $"
+	NUM_ERROR_F DB	"EL NUMERO INTRODUCIDO NO ES VALIDO. PRUEBA CON OTRO.", 13, 10, "$"
 	SIGNO 		DB	?
 	
 	TEMP		DB	20 dup (?)
-	TEXTO		DB	10 dup (?)
 	NUM_DIG		DW	?
+
+	AUX			DB ?
 
 
 
@@ -56,8 +56,6 @@ INICIO PROC
 	MOV DX, OFFSET CLR_PANT
 	INT 21H
 
-
-
 	;;; LEEMOS POR TECLADO LOS CARACTERES
 	CALL READ
 
@@ -66,165 +64,71 @@ INICIO PROC
 	INT 21H
 
 	;;; IMPRIMIMOS LA LINEA SUPERIOR
-	MOV DX, OFFSET DET_LIN_SUP
-	INT 21H
-	
-	MOV AH, 2h
-	MOV DL, '|'
-	INT 21H
-
 	; Primer numero
-	MOV AL, MATRIZ[0]
+	MOV AH, MATRIZ[0]
 	CALL NUM_8_DIGITS
-	CALL DIGITS_ASCII
-	
-	MOV AH, 9h
-	MOV DX, OFFSET TEXTO
-	INT 21H
-
-	MOV AH, 2h
-	MOV DL, ' '
-	INT 21H
+	MOV BX, OFFSET DET + 7
+	CALL DIGITS_ASCII 
 
 	; Segundo numero
-	MOV AL, MATRIZ[1]
+	MOV AH, MATRIZ[1]
 	CALL NUM_8_DIGITS
+	MOV BX, OFFSET DET + 12
 	CALL DIGITS_ASCII
-
-	MOV AH, 9h
-	MOV DX, OFFSET TEXTO
-	INT 21H
-
-	MOV AH, 2h
-	MOV DL, ' '
-	INT 21H
 	
 	; Tercer numero
-	MOV AL, MATRIZ[2]
+	MOV AH, MATRIZ[2]
 	CALL NUM_8_DIGITS
+	MOV BX, OFFSET DET + 17
 	CALL DIGITS_ASCII
 
-	MOV AH, 9h
-	MOV DX, OFFSET TEXTO
-	INT 21H
-
-	MOV AH, 2h
-	MOV DL, '|'
-	INT 21H
-
-	;;; IMPRIMIMOS LA LINEA CENTRAL
-	MOV AH, 9h
-	MOV DX,OFFSET DET_LINEA
-	INT 21H
-
-	MOV AH, 2h
-	MOV DL, '|'
-	INT 21H
-
+	;;;	SEGUNDA FILA
 	; Primer numero
-	MOV AL, MATRIZ[3]
+	MOV AH, MATRIZ[3]
 	CALL NUM_8_DIGITS
+	MOV BX, OFFSET DET + 30
 	CALL DIGITS_ASCII
-	
-	MOV AH, 9h
-	MOV DX, OFFSET TEXTO
-	INT 21H
-
-	MOV AH, 2h
-	MOV DL, ' '
-	INT 21H
 
 	; Segundo numero
-	MOV AL, MATRIZ[4]
+	MOV AH, MATRIZ[4]
 	CALL NUM_8_DIGITS
+	MOV BX, OFFSET DET + 35
 	CALL DIGITS_ASCII
-	
-	MOV AH, 9h
-	MOV DX, OFFSET TEXTO
-	INT 21H
-
-	MOV AH, 2h
-	MOV DL, ' '
-	INT 21H
 	
 	; Tercer numero
-	MOV AL, MATRIZ[5]
+	MOV AH, MATRIZ[5]
 	CALL NUM_8_DIGITS
+	MOV BX, OFFSET DET + 40
 	CALL DIGITS_ASCII
-	
-	MOV AH, 9h
-	MOV DX, OFFSET TEXTO
-	INT 21H
-
-	MOV AH, 2h
-	MOV DL, '|'
-	INT 21H
 	
 	; Resultado del determinante
-	MOV AH, 2h
-	MOV DL, ' '
-	INT 21H
-
-	MOV DL, '='
-	INT 21H
-
-	MOV DL, ' '
-	INT 21H
-
 	CALL DETERMINANTE
 	MOV AX, BX
 	CALL NUM_DIGITS
+	MOV BX, OFFSET DET + 47
 	CALL DIGITS_ASCII
-	
-	MOV AH, 9h
-	MOV DX, OFFSET TEXTO
-	INT 21H
 
 	;;; IMPRIMIMOS LA LINEA INFERIOR
-	MOV DX, OFFSET DET_LIN_INF
-	INT 21H
-	
-	MOV AH, 2h
-	MOV DL, '|'
-	INT 21H
-
 	; Primer numero
-	MOV AL, MATRIZ[6]
+	MOV AH, MATRIZ[6]
 	CALL NUM_8_DIGITS
+	MOV BX, OFFSET DET + 60
 	CALL DIGITS_ASCII
-	
-	MOV AH, 9h
-	MOV DX, OFFSET TEXTO
-	INT 21H
-
-	MOV AH, 2h
-	MOV DL, ' '
-	INT 21H
 
 	; Segundo numero
-	MOV AL, MATRIZ[7]
+	MOV AH, MATRIZ[7]
 	CALL NUM_8_DIGITS
+	MOV BX, OFFSET DET + 65
 	CALL DIGITS_ASCII
-	
-	MOV AH, 9h
-	MOV DX, OFFSET TEXTO
-	INT 21H
 
-	MOV AH, 2h
-	MOV DL, ' '
-	INT 21H
-	
 	; Tercer numero
-	MOV AL, MATRIZ[8]
+	MOV AH, MATRIZ[8]
 	CALL NUM_8_DIGITS
+	MOV BX, OFFSET DET + 70
 	CALL DIGITS_ASCII
 	
 	MOV AH, 9h
-	MOV DX, OFFSET TEXTO
-	INT 21H
-
-	MOV AH, 2h
-	MOV DL, '|'
+	MOV DX, OFFSET DET
 	INT 21H
 	
 	; FIN DEL PROGRAMA
@@ -232,7 +136,10 @@ INICIO PROC
 	INT 21h
 INICIO ENDP
 
-;
+;_______________________________________________________________ 
+; SUBRUTINA PARA LEER LOS 9 NUMEROS DE LA MATRIZ POR TECLADO 
+; SALIDA MATRIZ
+;_______________________________________________________________ 
 READ PROC NEAR
 	MOV DI, 0
 	MOV AH, 9h
@@ -265,7 +172,12 @@ READ PROC NEAR
 
 READ ENDP
 
-
+;_______________________________________________________________ 
+; SUBRUTINA PARA OBTENER UN NUMERO ENTERO DE 1B PARTIR DE SU 
+; REPRESENTACION EN CODIGO ASCII
+; ENTRADA TEMP
+; SALIDA BL
+;_______________________________________________________________ 
 ASCII_NUM PROC NEAR
 	MOV SI, 2
 	MOV BL, 0
@@ -305,7 +217,7 @@ ASCII_NUM ENDP
 
 ;_______________________________________________________________ 
 ; SUBRUTINA PARA CALCULAR EL DETERMINANTE DE UNA MATRIZ 
-; 3x3 CON NUMEROS DE 5bits con signo 
+; 3x3 CON NUMEROS DE 5BITS CON SIGNO
 ; SALIDA BX
 ;_______________________________________________________________ 
 
@@ -313,36 +225,61 @@ DETERMINANTE PROC NEAR
     ;;;Sumamos las tres lineas
 	MOV AL, MATRIZ
 	IMUL MATRIZ[4]
-	IMUL MATRIZ[8]
+	MOV DH, MATRIZ[8]
+	CALL EXTEND_NUM
+	IMUL DX
 	MOV BX, AX
 	
 	MOV AL, MATRIZ[1]
 	IMUL MATRIZ[5]
-	IMUL MATRIZ[6]
+	MOV DH, MATRIZ[6]
+	CALL EXTEND_NUM
+	IMUL DX
 	ADD BX, AX
 	
 	MOV AL, MATRIZ[2]
 	IMUL MATRIZ[3]
-	IMUL MATRIZ[7]
+	MOV DH, MATRIZ[7]
+	CALL EXTEND_NUM
+	IMUL DX
 	ADD BX, AX
 	
 	;;; Restamos las otras tres lineas
 	MOV AL, MATRIZ[2]
 	IMUL MATRIZ[4]
-	IMUL MATRIZ[6]
+	MOV DH, MATRIZ[6]
+	CALL EXTEND_NUM
+	IMUL DX
 	SUB BX, AX
 	
 	MOV AL, MATRIZ
 	IMUL MATRIZ[5]
-	IMUL MATRIZ[7]
+	MOV DH, MATRIZ[7]
+	CALL EXTEND_NUM
+	IMUL DX
 	SUB BX, AX
 	
 	MOV AL, MATRIZ[1]
 	IMUL MATRIZ[3]
-	IMUL MATRIZ[8]
+	MOV DH, MATRIZ[8]
+	CALL EXTEND_NUM
+	IMUL DX
 	SUB BX, AX
     RET 
 DETERMINANTE ENDP 
+
+;_______________________________________________________________ 
+; SUBRUTINA PARA EXTENDER UN NUMERO DE 1B A 2D
+; ENTRADA DH
+; SALIDA DX
+;_______________________________________________________________
+EXTEND_NUM:
+	MOV AUX, CL
+	MOV CL, 8
+	SAR DX, CL
+	MOV CL, AUX
+	RET
+	
 
 ;_______________________________________________________________ 
 ; SUBRUTINA PARA OBTENER LOS DIGITOS Y EL SIGNO DE UN 
@@ -380,43 +317,36 @@ NUM_DIGITS ENDP
 ;_______________________________________________________________ 
 ; SUBRUTINA PARA OBTENER LOS DIGITOS Y EL SIGNO DE UN 
 ; NUMERO DE 1 Byte 
-; ENTRADA AL
+; ENTRADA AH
 ; SALIDA TEMP, SIGNO Y NUM_DIG
 ;_______________________________________________________________ 
 NUM_8_DIGITS PROC NEAR
-	ADD AL, 0
-	JS	NEGATIVO_8
-	MOV AH, 0
-	
-	COMUN_8:
+	MOV CL, 8
+	SAR AX, CL
 	CALL NUM_DIGITS
 	RET
-	
-	NEGATIVO_8:
-	MOV AH, -1
-	JMP COMUN_8
 NUM_8_DIGITS ENDP
 
 ;_______________________________________________________________ 
 ; SUBRUTINA PARA OBTENER EL CODIGO ASCII A PARTIR DE SU
 ; SIGNO Y DIGITOS 
-; ENTRADA SIGNO, TEMP, NUM_DIG
-; SALIDA TEXTO
+; ENTRADA SIGNO, TEMP, NUM_DIG, BX COMO OFFSET PARA INDICAR
+;	DONDE GUARDAR LA CADENA DE TEXTO
+; SALIDA DET
 ;_______________________________________________________________ 
 DIGITS_ASCII PROC NEAR
 	MOV SI, [NUM_DIG]
 	MOV DI, 1
 	MOV DL, SIGNO
-	MOV TEXTO[0], DL
+	MOV [BX], DL
 	BUCLE:
 	MOV AL, TEMP[SI]
 	ADD AL, 30h
-	MOV TEXTO[DI], AL
+	MOV [BX][DI], AL
 	
 	INC DI
 	DEC SI
 	JNS BUCLE
-	MOV TEXTO[DI], "$"
 	RET
 	
 DIGITS_ASCII ENDP
