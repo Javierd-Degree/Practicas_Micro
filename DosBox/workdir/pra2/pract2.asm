@@ -7,10 +7,12 @@
 DATOS SEGMENT
 	MATRIZ 		DB 	11, -3, 1, -3, 5, 7, 1, 7, -1
 	CLR_PANT 	DB 	1BH,"[2","J$"
+	OPC_EJEC	DB	4 dup (?)
 
 	DET 		DB	6 dup(" "), "|             |", 13, 10, "|A| = |             | =     ", 13, 10, 6 dup(" "), "|             |", 13, 10, "$"
 
-	INTRO_NUM_F	DB	"INTRODUCE LOS NUMEROS DE LA MATRIZ UNO POR UNO", 13, 10, "$"
+	INTRO_OPC_E	DB	"INTRODUCE LA OPCION DEL PROGRAMA A EJECUTAR:", 13, 10, "1 - VALORES POR DEFECTO", 13, 10, "2 - VALORES INTRODUCIDOS POR TECLADO", 13, 10, "$"
+	INTRO_NUM_F	DB	"INTRODUCE LOS 9 NUMEROS DE LA MATRIZ SEPARADOS POR ESPACIOS. POR EJEMPLO: 1 0 0 0 1 0 0 0 1", 13, 10, "$"
 	NUM_ERROR_F DB	"ALGUNO DE LOS NUMEROS INTRODUCIDOS NO ES VALIDO. PRUEBA CON OTRA ENTRADA", 13, 10, "$"
 	SIGNO 		DB	?
 	
@@ -52,12 +54,30 @@ INICIO PROC
 	MOV SP, 64 ; CARGA EL PUNTERO DE PILA CON EL VALOR MAS ALTO
 	; FIN DE LAS INICIALIZACIONES
 	; COMIENZO DEL PROGRAMA
-	
+
+	;;; EJECUTAMOS LA OPCION 1 O 2
+	READ_OPTION:
 	MOV AH, 9h	; BORRA LA PANTALLA
 	MOV DX, OFFSET CLR_PANT
 	INT 21H
+	MOV DX, OFFSET INTRO_OPC_E
+	INT 21H
+
+	MOV AH, 0Ah
+	MOV DX, OFFSET OPC_EJEC
+	MOV OPC_EJEC[0], 2
+	INT 21H
+
+	; Decidimos la opcion a ejecutar o volvemos a preguntar
+	CMP OPC_EJEC[2], "1"
+	JZ  CALCULATE
+	CMP OPC_EJEC[2], "2"
+	JZ  READ_FROM_KEYBOARD
+	JMP READ_OPTION
+
 
 	;;; LEEMOS POR TECLADO LOS CARACTERES
+	READ_FROM_KEYBOARD:
 	CALL READ
 	CMP [READ_RESULT], -1
 	JNZ CORRECT_ARGS
@@ -73,6 +93,7 @@ INICIO PROC
 	INT 21H
 
 	;;; IMPRIMIMOS LA LINEA SUPERIOR
+	CALCULATE:
 	; Primer numero
 	MOV AH, MATRIZ[0]
 	CALL NUM_8_DIGITS
@@ -150,7 +171,8 @@ INICIO ENDP
 
 ;_______________________________________________________________ 
 ; SUBRUTINA PARA LEER LOS 9 NUMEROS DE LA MATRIZ POR TECLADO 
-; SALIDA MATRIZ
+; SALIDA: MATRIZ Y READ_RESULT PARA RECONOCER POSIBLES ERRORES
+; EN LA ENTRADA INTRODUCIDA
 ;_______________________________________________________________ 
 READ PROC NEAR
 	MOV DI, 0
@@ -158,6 +180,7 @@ READ PROC NEAR
 	MOV DX, OFFSET INTRO_NUM_F
 	INT 21H
 
+	; Leemos la linea entera introducida por teclado
 	MOV AH, 0Ah
 	MOV DX, OFFSET TEMP
 	MOV TEMP[0], 40
@@ -165,14 +188,17 @@ READ PROC NEAR
 
 	MOV BX, 0
 
+	; De la linea, extraemos los 9 numeros
 	LEER:
 	CALL ASCII_NUM
 
+	; Aseguramos que los numeros estan en el rango adecuado
 	CMP CL, 15
 	JG NUM_ERROR
 	CMP CL, -16
 	JL NUM_ERROR	
 
+	; Guardamos el numero en su posicion dentro de matriz
 	MOV MATRIZ[DI], CL
 	INC DI
 	CMP DI, 9
@@ -188,7 +214,8 @@ READ ENDP
 ;_______________________________________________________________ 
 ; SUBRUTINA PARA OBTENER UN NUMERO ENTERO DE 1B PARTIR DE SU 
 ; REPRESENTACION EN CODIGO ASCII
-; ENTRADA TEMP, BX PARA SABER EN QUE PARTE DE TEMP LEER
+; ENTRADA TEMP, BX PARA SABER EL DESPLAZAMIENTO DENTRO DE TEMP
+; EN EL QUE LEER
 ; SALIDA CL
 ;_______________________________________________________________ 
 ASCII_NUM PROC NEAR
@@ -200,10 +227,13 @@ ASCII_NUM PROC NEAR
 	CMP AL, "-"
 	JNZ CARGAR_NUM
 
+	; Almacenamos el signo del numero
 	ST_SIGNO:
 	MOV [SIGNO], AL
 	INC SI
 
+	; Cargamos el numero entre la posicion que indica BX y SI
+	; y el siguiente espacio o fin de linea
 	CARGAR_NUM:
 	MOV AL, TEMP[SI][BX]
 	SUB AL, 30h
@@ -240,7 +270,14 @@ ASCII_NUM ENDP
 ;_______________________________________________________________ 
 
 DETERMINANTE PROC NEAR 
-    ;;;Sumamos las tres lineas
+    ;;; USAMOS LA REGLA DE CRAMER ALMACENANDO LAS SUMAS
+    ;;; Y RESTAS EN BX
+    ;;; MULTIPLICAMOS LOS DOS PRIMEROS NUMEROS COMO ENTEROS
+    ;;; DE 8 BITS, Y EL RESULTADO, POR EL TERCERO, COMO ENTEROS
+    ;;; DE 16 BITS. EL RESULTADO NUNCA VA A TENER MAS DE 15 BITS
+    ;;; CON LO QUE PODEMOS IGNORAR LO ALMACENADO EN DX
+
+    ; A11*A22*A33
 	MOV AL, MATRIZ
 	IMUL MATRIZ[4]
 	MOV DH, MATRIZ[8]
@@ -248,6 +285,7 @@ DETERMINANTE PROC NEAR
 	IMUL DX
 	MOV BX, AX
 	
+	; A12*A23*A31
 	MOV AL, MATRIZ[1]
 	IMUL MATRIZ[5]
 	MOV DH, MATRIZ[6]
@@ -255,6 +293,7 @@ DETERMINANTE PROC NEAR
 	IMUL DX
 	ADD BX, AX
 	
+	; A13*A21*A32
 	MOV AL, MATRIZ[2]
 	IMUL MATRIZ[3]
 	MOV DH, MATRIZ[7]
@@ -263,6 +302,7 @@ DETERMINANTE PROC NEAR
 	ADD BX, AX
 	
 	;;; Restamos las otras tres lineas
+	; A13*A22*A31
 	MOV AL, MATRIZ[2]
 	IMUL MATRIZ[4]
 	MOV DH, MATRIZ[6]
@@ -270,13 +310,14 @@ DETERMINANTE PROC NEAR
 	IMUL DX
 	SUB BX, AX
 	
+	; A11*A23*A32
 	MOV AL, MATRIZ
 	IMUL MATRIZ[5]
 	MOV DH, MATRIZ[7]
 	CALL EXTEND_NUM
 	IMUL DX
 	SUB BX, AX
-	
+	; A12*A21*A33
 	MOV AL, MATRIZ[1]
 	IMUL MATRIZ[3]
 	MOV DH, MATRIZ[8]
@@ -287,7 +328,7 @@ DETERMINANTE PROC NEAR
 DETERMINANTE ENDP 
 
 ;_______________________________________________________________ 
-; SUBRUTINA PARA EXTENDER UN NUMERO DE 1B A 2D
+; SUBRUTINA PARA EXTENDER UN NUMERO DE 1B A 2B
 ; ENTRADA DH
 ; SALIDA DX
 ;_______________________________________________________________
@@ -301,27 +342,32 @@ EXTEND_NUM:
 
 ;_______________________________________________________________ 
 ; SUBRUTINA PARA OBTENER LOS DIGITOS Y EL SIGNO DE UN 
-; NUMERO DE 2 Bytes 
+; NUMERO DE 2B 
 ; ENTRADA AX
 ; SALIDA TEMP, SIGNO Y NUM_DIG
 ;_______________________________________________________________ 
 NUM_DIGITS PROC NEAR
 	MOV DI, 0
-	MOV DL, 10
+	MOV BX, 10
 	ADD AX, 0
+	; Almacenamos el signo y convertimos el numero en positivo
 	JS	NEGATIVO
 	MOV SIGNO, " "
 	
+	; Dividimos sucesivamente entre 10 hasta que el cociente
+	; sea 0, almacenando el resto en TEMP
 	COMUN:
-	DIV DL
-	MOV TEMP[DI], AH
+	MOV DX, 0
+	DIV BX
+	MOV TEMP[DI], DL
 	
-	CMP AL, 0
+	CMP AX, 0
 	JZ FIN_NUM
-	MOV AH, 0
+	MOV DX, 0
 	INC DI
 	JMP COMUN
 	
+	; Guardamos el numero de digitos
 	FIN_NUM:
 	MOV NUM_DIG, DI
 	RET
@@ -357,6 +403,9 @@ DIGITS_ASCII PROC NEAR
 	MOV DI, 1
 	MOV DL, SIGNO
 	MOV [BX], DL
+
+	; Recorremos todos los digitos sumandoles 30h
+	; para pasarlos a codigo ASCII
 	BUCLE:
 	MOV AL, TEMP[SI]
 	ADD AL, 30h
