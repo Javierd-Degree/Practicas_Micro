@@ -64,6 +64,11 @@ _computeControlDigit PROC FAR 			;; En C es int unsigned long int factorial(unsi
 		RET								;; Retorno de la funcion que nos ha llamado, devolviendo el resultado del computeControlDigit en AX
 _computeControlDigit ENDP				;; Termina la funcion computeControlDigit
 
+NUM_DIG_COUNTRY		EQU 	3
+NUM_DIG_COMPANY		EQU 	4
+NUM_DIG_PRODUCT		EQU 	5
+NUM_DIG_CONTROL		EQU 	1
+
 PUBLIC _decodeBarCode					;; Hacer visible y accesible la funci�n desde C
 _decodeBarCode PROC FAR 				;; En C es int unsigned long int factorial(unsigned int n)
 	PUSH BP 							;; Salvaguardar BP en la pila para poder modificarle sin modificar su valor
@@ -73,45 +78,47 @@ _decodeBarCode PROC FAR 				;; En C es int unsigned long int factorial(unsigned 
 	
 	LES BX, [BP + 6]					;; Leemos la direccion del codigo de barras
 	LDS SI, [BP + 10]					;; Leemos la direccion de country code
-	
+
 	;; Cargamos el codigo de pais
 	PUSH ES
 	PUSH BX
-	MOV DX, 3
+	MOV DX, NUM_DIG_COUNTRY
 	PUSH DX
 	CALL ASCII_NUM
+	ADD SP, 6	;; Reestablecemos la posicion de la pila
 	MOV DS:[SI], AX ;; Escribimos en memoria el resultado. Sabemos que en este caso son solo dos bytes
 
 
-	; TODO Quitar numeros mágicos: quitr 3*2 y poner NUM_DIG_COMPANY
-	ADD BX, 3*2 ;; Nos posicionamos al comienzo del codigo de empresa
+	ADD BX, NUM_DIG_COUNTRY ;; Nos posicionamos al comienzo del codigo de empresa
 	LDS SI, [BP + 14]					;; Leemos la direccion de companyCode
 	PUSH ES
 	PUSH BX
-	MOV DX, 4
+	MOV DX, NUM_DIG_COMPANY
 	PUSH DX
 	CALL ASCII_NUM
+	ADD SP, 6	;; Reestablecemos la posicion de la pila
 	MOV DS:[SI], AX ;; Escribimos en memoria el resultado. Sabemos que en este caso son solo dos bytes
 
-	;; TODO QUITAR 4*2, NUMERO MAGICO
-	ADD BX, 4*2 ;; Nos posicionamos al comienzo del codigo de producto
+
+	ADD BX, NUM_DIG_COMPANY ;; Nos posicionamos al comienzo del codigo de producto
 	LDS SI, [BP + 18]					;; Leemos la direccion de productCode
 	PUSH ES
 	PUSH BX
-	MOV DX, 5
+	MOV DX, NUM_DIG_PRODUCT
 	PUSH DX
 	CALL ASCII_NUM
+	ADD SP, 6	;; Reestablecemos la posicion de la pila
 	MOV DS:[SI], AX ;; Escribimos en memoria el resultado. Sabemos que en este caso son cuatro bytes
 	MOV DS:[SI + 2], DX
 
-	;; TODO QUITAR NUMERO MAGICO
-	ADD BX, 5*2	;; Nos posicionamos al comienzo del codigo de control
-	LDS SI, [BP + 14]					;; Leemos la direccion de controlDigit
+	ADD BX, NUM_DIG_PRODUCT	;; Nos posicionamos al comienzo del codigo de control
+	LDS SI, [BP + 22]					;; Leemos la direccion de controlDigit
 	PUSH ES
 	PUSH BX
-	MOV DX, 1
+	MOV DX, NUM_DIG_CONTROL
 	PUSH DX
 	CALL ASCII_NUM
+	ADD SP, 6	;; Reestablecemos la posicion de la pila
 	MOV DS:[SI], AL ;; Escribimos en memoria el resultado. Sabemos que en este caso es solo un byte
 		
 	MOV AL, AH
@@ -122,37 +129,35 @@ _decodeBarCode PROC FAR 				;; En C es int unsigned long int factorial(unsigned 
 _decodeBarCode ENDP						;; Termina la funcion computeControlDigit
 
 
-
 ; Devuelve un numero de hasta 17bits en DX:AX
 ASCII_NUM PROC NEAR
 	PUSH BP 							
 	MOV BP, SP
 	
-	PUSH SI BX CX DX DS
-	MOV BX, [BP + 6]	; Numero de digitos a leer, >= 1
-	LDS SI, [BP + 8]
+	PUSH SI BX CX DS
+	MOV BX, [BP + 4]	; Numero de digitos a leer, >= 1
+	LDS SI, [BP + 6]
 	
-	MOV SI, 0
-	MOV CX, 10
 	XOR DX, DX
-
+	XOR AX, AX
 	; Cargamos el numero entre la posicion que indica BX y SI
 	CARGAR_NUM:
 	; Cargamos el numero en AX
-	MOV AL, DS:[SI]
-	SUB AL, 30h
-	XOR AH, AH
+	MOV CL, DS:[SI]
+	SUB CL, 30h
+	XOR CH, CH
+	ADD AX, CX
 
 	INC SI
 	DEC BX
 	JZ FIN_CONVERSION
 
+	MOV CX, 10
 	MUL CX
 	JMP CARGAR_NUM
 
-
 	FIN_CONVERSION:
-	POP DS DX CX BX SI
+	POP DS CX BX SI
 	POP BP
 	RET
 

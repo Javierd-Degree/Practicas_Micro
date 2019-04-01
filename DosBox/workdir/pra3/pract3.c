@@ -37,7 +37,8 @@ int main( void ){
 
 	*/
 
-	char barCodeStr[] = "8456789012345";
+	//char barCodeStr[] = "8456789012345";
+	char barCodeStr[] = "7701234002008";
 	unsigned int  countryCode, companyCode;
 	unsigned long productCode;
 	unsigned char controlDigit;
