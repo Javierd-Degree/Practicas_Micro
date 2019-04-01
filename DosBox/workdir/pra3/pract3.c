@@ -16,8 +16,8 @@
 
 /* Ejercicio 1 */
 
-//unsigned char computeControlDigit(char* barCodeASCII);
-//void createBarCode(int countryCode, unsigned int companyCode, unsigned long productCode, unsigned char controlDigit, unsigned char* out_barCodeASCII);
+unsigned char computeControlDigit(char* barCodeASCII);
+void createBarCode(int countryCode, unsigned int companyCode, unsigned long productCode, unsigned char controlDigit, unsigned char* out_barCodeASCII);
 void decodeBarCode(unsigned char* in_barCodeASCII, unsigned int* countryCode, unsigned int* companyCode, unsigned long* productCode, unsigned char* controlDigit);
 
 
@@ -37,11 +37,11 @@ int main( void ){
 
 	*/
 
-	//char barCodeStr[] = "8456789012345";
-	char barCodeStr[] = "7701234002008";
+	/*char barCodeStr[] = "8456789012345";
+	//char barCodeStr[] = "7701234002008";
 	unsigned int  countryCode, companyCode;
 	unsigned long productCode;
-	unsigned char controlDigit;
+	unsigned char controlDigit, controlDigitCheck;
 
 	decodeBarCode(barCodeStr, &countryCode, &companyCode, &productCode, &controlDigit);
 	printf("Codigo de barras leido:\n");
@@ -50,7 +50,7 @@ int main( void ){
 	printf("- Codigo de Producto - %lu -\n",productCode);
 	printf("- Codigo de Control - %u -\n",controlDigit);
 
-	/*
+	
 	controlDigitCheck = computeControlDigit(barCodeStr);
 	
 	if(controlDigit != controlDigitCheck){
@@ -61,8 +61,15 @@ int main( void ){
 	}
 	else{
 		printf("Codigo de control %u es correcto para el codigo de barras %s\n", controlDigit, barCodeStr);
-	}
-	*/
+	}*/
+
+	char barCodeStrCorregido[14];
+	unsigned int  countryCode = 770, companyCode = 1234;
+	unsigned long productCode = 00200;
+	unsigned char controlDigitCheck = 8;
+
+	createBarCode(countryCode,companyCode,productCode,controlDigitCheck,barCodeStrCorregido);
+	printf("Codigo de barras corregido es: %s\n",barCodeStrCorregido);
 	
 	return 0;
 }
