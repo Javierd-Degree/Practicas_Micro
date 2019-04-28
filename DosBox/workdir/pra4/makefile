@@ -15,3 +15,5 @@ clean:
 	del *.obj
 	del *.lst
 	del *.map
+	del *.exe
+	del *.com

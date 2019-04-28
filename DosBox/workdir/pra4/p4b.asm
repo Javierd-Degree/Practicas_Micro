@@ -5,8 +5,12 @@
 ;**************************************************************************
 ; DEFINICION DEL SEGMENTO DE DATOS
 DATOS SEGMENT
+	infoPolibio DB "La matriz de Polibio es:", 13, 10, "$"
+	infoCodificado DB "La cadena HOLAJAVIER codificada es:", 13, 10, "$"
+	infoDeodificado DB 13, 10, "La cadena 33444122352255342651 decodificada es:", 13, 10, "$"
 	matrizPolibio DB "345678", "9ABCDE", "FGHIJK", "LMNOPQ", "RSTUVW", "XYZ012"
-	cadena DB "CADENA DE PRUEBA"
+	cadena DB "HOLAJAVIER$"
+	cadenaCod DB "33444122352255342651$" 	;; HOLA
 DATOS ENDS
 
 ;**************************************************************************
@@ -38,7 +42,31 @@ INICIO PROC
 	; FIN DE LAS INICIALIZACIONES
 	; COMIENZO DEL PROGRAMA
 	
+	;; Imprimimos la matriz
+	MOV AH, 9
+	MOV DX, OFFSET infoPolibio
+	INT 21h
 	CALL PRINT_MATRIZ
+
+	;; Codificamos un string
+	;; DS ya contiene el segmento de datos
+	MOV AH, 9
+	MOV DX, OFFSET infoCodificado
+	INT 21h
+	;; Llamamos a la interrupcion
+	MOV AH, 10h
+	MOV DX, OFFSET cadena
+	INT 57h
+
+	;; Decodificamos un string
+	;; DS ya contiene el segmento de datos
+	MOV AH, 9
+	MOV DX, OFFSET infoDeodificado
+	INT 21h
+	;; Llamamos a la interrupcion
+	MOV AH, 11h
+	MOV DX, OFFSET cadenaCod
+	INT 57h
 
 	; FIN DEL PROGRAMA
 	MOV AX, 4C00h
@@ -78,13 +106,14 @@ PRINT_MATRIZ PROC NEAR
 	MOV DL, 10
 	INT 21h
 	
-	ADD BP, 6
-	CMP BP, 36
+	ADD BX, 6
+	CMP BX, 36
 	JNZ FILA
 	
 	
 	POP DX BX AX SI
 	POP BP
+	RET
 PRINT_MATRIZ ENDP
 
 
