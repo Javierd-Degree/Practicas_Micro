@@ -4,35 +4,68 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 DGROUP GROUP _DATA, _BSS				;; Se agrupan segmentos de datos en uno
 
-_DATA SEGMENT WORD PUBLIC 'DATA' 		;; Segmento de datos DATA público
+_DATA SEGMENT WORD PUBLIC 'DATA' 		;; Segmento de datos DATA pÃºblico
+	TEMP DB 40 DUP(?)
+	CURRENT DW 10h
+	COD DB "cod$"
+	DECOD DB "decod$"
+	QUIT DB "quit$"
+
+
 
 _DATA ENDS
 
-_BSS SEGMENT WORD PUBLIC 'BSS'			;; Segmento de datos BSS público
+_BSS SEGMENT WORD PUBLIC 'BSS'			;; Segmento de datos BSS pÃºblico
 
 _BSS ENDS
 
-_TEXT SEGMENT BYTE PUBLIC 'CODE' 		;; Definición del segmento de código
+_TEXT SEGMENT BYTE PUBLIC 'CODE' 		;; DefiniciÃ³n del segmento de cÃ³digo
 ASSUME CS:_TEXT, DS:DGROUP, SS:DGROUP
 			
 
-INICIO PROC FAR 					
-	PUSH BP 							
-	MOV BP, SP
-	PUSH
+INICIO:	
+	MOV DX, OFFSET QUIT
+
+	BUCLE_READ:	
+	CALL READ			
+	MOV BX, OFFSET TEMP
+
+	CMP CURRENT, 10h
+	JNE CALL_2
+
+	CALL_1:
+	MOV CX, OFFSET DECOD
+	JMP FUNCT_CALL
+
+	CALL_2:
+	MOV CX, OFFSET COD
+
+	FUNCT_CALL:
+	PUSH BX CX DX 
+	CALL COD_DECOD
+
+	CMP AX, 1
+	JE CHANGE
+
+	CMP AX, 2
+	JE ENDING
+
+	MOV AH, BYTE PTR CURRENT
+	INT 57h 
+	JMP BUCLE_READ
+
+	CHANGE:
+	CMP CURRENT, 10h
+	JNE OPT_2
+	MOV CURRENT, 11h
+	JMP BUCLE_READ
+	OPT_2:
+	MOV CURRENT, 10h
+	JMP BUCLE_READ
 	
-	INC BYTE PTR CONTADOR
-	CMP BYTE PTR CONTADOR, 18
-	JNE FIN
-	
-	MOV AH 10h
-	INT 57h
-	
-	FIN:
-	POP
-	RET
-	
-INICIO ENDP						
+	ENDING:
+	POP SI DS DX CX BX BP
+	RET	
 
 
 READ PROC NEAR
@@ -42,16 +75,54 @@ READ PROC NEAR
 	
 	; Leemos la linea entera introducida por teclado
 	MOV AH, 0Ah
-	MOV DX, OFFSET TEMP
-	MOV TEMP[0], 40
+	MOV DX, [BP + 4]
+	MOV DX, 40
 	INT 21H
 
 	MOV BX, 0
-	MOV AX, OFFSET TEMP
+	MOV AX, DX
 	
 	POP DX BX BP
+	RET
 	
 READ ENDP
+
+
+COD_DECOD PROC NEAR
+	PUSH BP
+	MOV BP, SP
+	PUSH BX CX DX
+
+	MOV BX, [BP + 4]
+	MOV CX, [BP + 6]
+	MOV DX, [BP + 8]
+
+	XOR AX, AX
+
+	PUSH BX CX
+	CALL CHECK_STR
+	CMP AX, 1
+	JE FIN_1
+
+	PUSH BX DX
+	CALL CHECK_STR
+	CMP AX, 1
+	JE FIN_2
+
+	MOV AX, 0
+	JMP FINAL
+
+	FIN_1:
+	MOV AX, 1
+	JMP FINAL
+
+	FIN_2:
+	MOV AX, 2
+
+	FINAL:
+	POP DX CX BX BP
+	RET
+COD_DECOD ENDP
 
 
 CHECK_STR PROC NEAR
@@ -65,7 +136,8 @@ CHECK_STR PROC NEAR
 	XOR SI, SI
 	XOR AX, AX
 	BUCLE:
-	MOV CH, [DX + SI]
+	MOV BP, DX
+	MOV CH, [BP + SI]
 	CMP CH, '$'
 	JE FIN_T
 	CMP CH, [BX + SI]
@@ -83,4 +155,4 @@ CHECK_STR PROC NEAR
 	RET
 CHECK_STR ENDP
 _TEXT ENDS
-END
+END INICIO
