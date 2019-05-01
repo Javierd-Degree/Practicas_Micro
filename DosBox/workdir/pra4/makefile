@@ -1,4 +1,4 @@
-all: p4a.com p4b.exe p4c.exe p4c.com
+all: p4a.com p4b.exe p4c.exe p4c.com 
 
 p4a.com: p4a.obj
  tlink /v /t p4a

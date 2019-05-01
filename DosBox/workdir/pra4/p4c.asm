@@ -1,37 +1,62 @@
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 			SBM 2016. Practica 3 - Ejemplo					;
-;   Pareja													;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-DGROUP GROUP _DATA, _BSS				;; Se agrupan segmentos de datos en uno
-
-_DATA SEGMENT WORD PUBLIC 'DATA' 		;; Segmento de datos DATA público
+;**************************************************************************
+; SBM 2019. Programa pract1a.asm
+; Grupo 2301
+; Javier Delgado del Cerro y Javier López Cano
+;**************************************************************************
+; DEFINICION DEL SEGMENTO DE DATOS
+DATOS SEGMENT 
 	TEMP DB 40 DUP(?)
 	CURRENT DW 10h
 	COD DB "cod$"
 	DECOD DB "decod$"
 	QUIT DB "quit$"
+	CLR_PANT 	DB 	1BH,"[2","J$"
+DATOS ENDS
 
+;**************************************************************************
+; DEFINICION DEL SEGMENTO DE PILA
+PILA SEGMENT STACK "STACK"
+	DB 40H DUP (0) ;ejemplo de inicialización, 64 bytes inicializados a 0
+PILA ENDS
 
+;**************************************************************************
+; DEFINICION DEL SEGMENTO EXTRA
+EXTRA SEGMENT
+	RESULT DW 0,0 ;ejemplo de inicialización. 2 PALABRAS (4 BYTES)
+EXTRA ENDS
 
-_DATA ENDS
-
-_BSS SEGMENT WORD PUBLIC 'BSS'			;; Segmento de datos BSS público
-
-_BSS ENDS
-
-_TEXT SEGMENT BYTE PUBLIC 'CODE' 		;; Definición del segmento de código
-ASSUME CS:_TEXT, DS:DGROUP, SS:DGROUP
+;**************************************************************************
+; DEFINICION DEL SEGMENTO DE CODIGO
+CODE SEGMENT
+ASSUME CS: CODE, DS:DATOS, ES:EXTRA, SS:PILA
 			
 
-INICIO:	
-	MOV DX, OFFSET QUIT
+INICIO PROC	
+	; INICIALIZA LOS REGISTROS DE SEGMENTO CON SU VALOR
+	MOV AX, DATOS
+	MOV DS, AX
+	MOV AX, PILA
+	MOV SS, AX
+	MOV AX, EXTRA
+	MOV ES, AX
+	MOV SP, 64 ; CARGA EL PUNTERO DE PILA CON EL VALOR MAS ALTO
+	; FIN DE LAS INICIALIZACIONES
+	; COMIENZO DEL PROGRAMA
+	MOV BX, OFFSET QUIT
 
 	BUCLE_READ:	
-	CALL READ			
-	MOV BX, OFFSET TEMP
+	;MOV AH, 9h
+	;MOV DX, OFFSET CLR_PANT
+	;INT 21H
+	CALL READ	
+
+	PUSH BX
+	CALL CHECK_STR
+	CMP AX, 1
+	JE ENDING		
 
 	CMP CURRENT, 10h
-	JNE CALL_2
+	JNZ CALL_2
 
 	CALL_1:
 	MOV CX, OFFSET DECOD
@@ -41,15 +66,15 @@ INICIO:
 	MOV CX, OFFSET COD
 
 	FUNCT_CALL:
-	PUSH BX CX DX 
-	CALL COD_DECOD
+	PUSH CX
+	CALL CHECK_STR
 
 	CMP AX, 1
 	JE CHANGE
 
-	CMP AX, 2
-	JE ENDING
-
+	MOV DX, OFFSET TEMP
+	INC DX 
+	INC DX
 	MOV AH, BYTE PTR CURRENT
 	INT 57h 
 	JMP BUCLE_READ
@@ -63,96 +88,52 @@ INICIO:
 	MOV CURRENT, 10h
 	JMP BUCLE_READ
 	
-	ENDING:
-	POP SI DS DX CX BX BP
-	RET	
+	ENDING:	
+	MOV AX, 4C00h
+	INT 21h
+INICIO ENDP
 
 
 READ PROC NEAR
-	PUSH BP
-	MOV BP, SP
-	PUSH BX DX 
-	
+	PUSH DX 	
 	; Leemos la linea entera introducida por teclado
 	MOV AH, 0Ah
-	MOV DX, [BP + 4]
-	MOV DX, 40
+	MOV DX, OFFSET TEMP
+	MOV TEMP[0], 40
 	INT 21H
-
-	MOV BX, 0
-	MOV AX, DX
 	
-	POP DX BX BP
-	RET
-	
+	POP DX
+	RET	
 READ ENDP
-
-
-COD_DECOD PROC NEAR
-	PUSH BP
-	MOV BP, SP
-	PUSH BX CX DX
-
-	MOV BX, [BP + 4]
-	MOV CX, [BP + 6]
-	MOV DX, [BP + 8]
-
-	XOR AX, AX
-
-	PUSH BX CX
-	CALL CHECK_STR
-	CMP AX, 1
-	JE FIN_1
-
-	PUSH BX DX
-	CALL CHECK_STR
-	CMP AX, 1
-	JE FIN_2
-
-	MOV AX, 0
-	JMP FINAL
-
-	FIN_1:
-	MOV AX, 1
-	JMP FINAL
-
-	FIN_2:
-	MOV AX, 2
-
-	FINAL:
-	POP DX CX BX BP
-	RET
-COD_DECOD ENDP
-
 
 CHECK_STR PROC NEAR
 	PUSH BP
 	MOV BP, SP
-	PUSH BX CX DX SI 
+	PUSH BX CX SI 
 	
 	MOV BX, [BP + 4]
-	MOV DX, [BP + 6]
 	
 	XOR SI, SI
 	XOR AX, AX
 	BUCLE:
 	MOV BP, DX
-	MOV CH, [BP + SI]
-	CMP CH, '$'
-	JE FIN_T
-	CMP CH, [BX + SI]
-	JNE FIN
+	MOV CH, TEMP[SI + 2]
+	MOV CL, [BX + SI]
+	CMP CH, CL
+	JNZ FIN_VALOR
 	INC SI
 	JMP BUCLE
 	
-	FIN_T:
-	MOV CL, [BX + SI]
+	FIN_VALOR:
+	CMP CH, 13
+	JNZ FIN
 	CMP CL, '$'
+	JNZ FIN
 	MOV AX, 1
 	
 	FIN:
-	POP SI DX CX BX BP
+	POP SI CX BX BP
 	RET
 CHECK_STR ENDP
-_TEXT ENDS
+CODE ENDS
 END INICIO

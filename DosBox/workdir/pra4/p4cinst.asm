@@ -60,10 +60,11 @@ sign DB "JJ"
 CONTADOR DW 0
 INDEX DW 0
 TEMP DB 40 dup(?)
+SEM DW 0
 
 ; Rutina de servicio a la interrupción
 RSI_2 PROC FAR
-	PUSH BX CX SI DI
+	PUSH AX BX CX SI DI
 
 	MOV BX, DX
 	
@@ -80,23 +81,18 @@ RSI_2 PROC FAR
 	BUCLE_CODIFICACION:
 	MOV DI,  DS:[BX][SI]	;; Leemos el caracter en DI
 	AND DI, 00FFh			;; Solo queremos leer los 8bytes del primer caracter
-	CMP DI, "$"
+	CMP DI, 13
 	JZ FIN_COD
 	ADD DI, DI
 	MOV DX, WORD PTR matrizInversa[DI]		;; Cargamos en DL la fila, en DH la columna
 	MOV DI, SI
 	ADD DI, DI
 	MOV WORD PTR TEMP[DI], DX
-	MOV AH, 2h
-	INT 21h			;; Imprimimos fila
-	MOV DL, DH
-	INT 21h			;; Imprimimos columna
 	INC SI
 	JMP BUCLE_CODIFICACION
 
 	FIN_COD:
 	ADD SI, SI
-	DEC SI
 	MOV TEMP[SI], '$'
 	JMP FIN
 	
@@ -106,7 +102,7 @@ RSI_2 PROC FAR
 	MOV SI, DI
 	ADD SI, SI
 	MOV AX,  DS:[BX][SI]	;; Leemos las dos coordenadas. En AH la segunda y en AL la primera
-	CMP AL, '$'				;; La cadena ha acabado
+	CMP AL, 13			;; La cadena ha acabado
 	JZ FIN_DECOD
 	
 	;; Restar 30h a ambos para pasar a decimal, Buscar en la tabla e imprimir.
@@ -129,8 +125,6 @@ RSI_2 PROC FAR
 	MOV SI, CX
 	MOV DL, matrizPolibio[SI]
 	MOV TEMP[DI], DL
-	MOV AH, 2h
-	INT 21h
 	INC DI
 	JMP BUCLE_DECODIFICACION
 
@@ -139,32 +133,27 @@ RSI_2 PROC FAR
 	
 	FIN:
 	CALL IMPRIMIR
-	POP DI SI CX BX
+	POP DI SI CX BX AX
 	IRET
 RSI_2 ENDP
 
-RSI_1 PROC FAR
-	PUSH BP 							
-	MOV BP, SP		
-
+RSI_1 PROC FAR	
 	INC BYTE PTR CONTADOR
 	CMP BYTE PTR CONTADOR, 18
 	JNE FIN_INT
 	
-	MOV BYTE PTR FLAG, 1 
+	MOV BYTE PTR SEM, 1 
 	MOV BYTE PTR CONTADOR, 0
 
 	FIN_INT:
-	POP BP
 	IRET
 RSI_1 ENDP
 
-IMPRIMIR PROC
-	PUSH BP
-	MOV BP, SP
+IMPRIMIR PROC NEAR
 	PUSH SI DX 
 
 	XOR SI, SI
+	MOV AH, 2h
 
 	BUCLE_IMP:
 	MOV DL, TEMP[SI]
@@ -172,7 +161,7 @@ IMPRIMIR PROC
 	JZ FIN_IMP
 
 	BUCLE_TEMP:
-	CMP BYTE PTR FLAG, 1
+	CMP BYTE PTR SEM, 1
 	JNZ BUCLE_TEMP
 
 	INT 21h
@@ -181,11 +170,11 @@ IMPRIMIR PROC
 	JMP BUCLE_IMP
 
 	FIN_IMP:
-	POP DX SI BP
+	POP DX SI 
 	RET
 IMPRIMIR ENDP
 
-calcularInversa PROC
+calcularInversa PROC NEAR
 	PUSH AX BX CX DX SI DI
 
 	XOR SI, SI
@@ -224,24 +213,28 @@ calcularInversa ENDP
 ;; TODO Comprobar al instalar desinstalar etc si el programa esta instalado
 
 INSTALL:
-	MOV CX, 0 
-	MOV ES, AX 
-	MOV CX, OFFSET RSI_1 
-	MOV BX, CS 
+	IN AX, 21h
+	OR AX, 1
+	OUT 21h, AX
 	
-	IN AL, 21h
-	OR AL, 1
-	OUT 21h, AL
-	MOV ES:[1Ch*4], CX 
-	MOV ES:[1Ch*4+2], BX 
-
+	MOV CX, 0 
+	MOV ES, CX
 	MOV CX, OFFSET RSI_2 
 	MOV BX, CS 
 	MOV ES:[57h*4], CX 
 	MOV ES:[57h*4+2], BX 
-	IN AL, 21h
-	AND AL, 0FEh
-	OUT 21h, AL
+
+	MOV CX, OFFSET RSI_1 
+	MOV BX, CS
+	
+
+	MOV ES:[1Ch*4], CX 
+	MOV ES:[1Ch*4+2], BX
+
+	
+	IN AX, 21h
+	AND AX, 0FFFEh
+	OUT 21h, AX
 	
 	CALL calcularInversa
 	
