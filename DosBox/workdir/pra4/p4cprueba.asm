@@ -3,40 +3,15 @@ codigo SEGMENT
 	ORG 256
 	
 INICIO:
-	MOV CL, DS:[80h]			;; Comprobamos los parámetros de entrada
-								
-	CMP CL, 0					;; Si no hay ningun parametro, informamos del estado
-	JNZ INICIO_PARAMETROS
-	CALL SHOW_STATUS
-	JMP INICIO_FIN
+	MOV AX, codigo
+	MOV CS, AX
+	MOV DS, AX
 
-	INICIO_PARAMETROS:
-	CMP CL, 3 					;; Si hay entrada, tiene que tener tamaño 3 (espacio+/+I o D)
-	JNZ INICIO_ERR_PARAM
-	MOV CX, DS:[82h]			;; Cargamos los dos caracteres a leer
-	CMP CL, '/'					;; Aseguramos que el parámetro sea valido
-	JNZ INICIO_ERR_PARAM
+	;; TODO Calcular inversa etc
 
-	CMP CH, 'I'					;; Si es una I, instalamos
-	JZ INICIO_INSTALL
+	# En DS ya esta el segmento de la rutina
+	MOV DX, OFFSET cadena
 
-	CMP CH, 'D'					;; Si es una D, desinstalamos
-	JZ INICIO_UNINSTALL
-
-	JMP INICIO_ERR_PARAM 		;; Si no es ninguno de los anteriores, es incorrecto
-
-	INICIO_INSTALL:
-	JMP INSTALL
-
-	INICIO_UNINSTALL:
-	CALL UNINSTALL
-	JMP INICIO_FIN
-
-	INICIO_ERR_PARAM:
-	MOV DX, OFFSET ERRR_PARAMETROS_STR		;; Mostramos las distintas formas de ejecutar el programa
-	MOV AH, 9
-	INT 21h
-	JMP INICIO_FIN
 
 	INICIO_FIN:
 	; Terminamos el programa
@@ -48,7 +23,7 @@ INICIO:
 ;; Variables globales
 NUM_RUTINA	EQU 57h
 FIRMA 		EQU "KK"
-TIEMPO	DB "TIEMPO$"
+CADENA DB "HOLA"
 PROGRAMA_INSTALADO_STR DB "Programa ya instalado en memoria",13,10,"$"
 PROGRAMA_NO_INSTALADO_STR DB "Programa no instalado",13,10,"$"
 INFORMACION_PROGRAMA DB "Desarrollado por la pareja formada por Javier Delgado del Cerro y Javier Lopez Cano",13,10,"$"
@@ -82,12 +57,12 @@ RSI_2 PROC FAR
 	BUCLE_CODIFICACION:
 	MOV DI,  DS:[BX][SI]	;; Leemos el caracter en DI
 	AND DI, 00FFh			;; Solo queremos leer los 8bytes del primer caracter
-	CMP DI, 13				;; En este caso, es una cadena leida de teclado, acaba en 13
+	CMP DI, 13
 	JZ FIN_COD
 	ADD DI, DI
 	MOV DX, WORD PTR matrizInversa[DI]		;; Cargamos en DL la fila, en DH la columna
 	MOV DI, SI
-	ADD DI, DI 				;; Guardamos el los dos caracteres de la codificacion
+	ADD DI, DI
 	MOV WORD PTR TEMP[DI], DX
 	INC SI
 	JMP BUCLE_CODIFICACION
@@ -95,7 +70,7 @@ RSI_2 PROC FAR
 	FIN_COD:
 	ADD SI, SI
 	MOV TEMP[SI], '$'
-	JMP FIN_IMPRIMIR
+	JMP FIN
 	
 	DECODIFICACION:
 	XOR DI, DI
@@ -103,7 +78,7 @@ RSI_2 PROC FAR
 	MOV SI, DI
 	ADD SI, SI
 	MOV AX,  DS:[BX][SI]	;; Leemos las dos coordenadas. En AH la segunda y en AL la primera
-	CMP AL, 13				;; La cadena ha acabado
+	CMP AL, 13			;; La cadena ha acabado
 	JZ FIN_DECOD
 	
 	;; Restar 30h a ambos para pasar a decimal, Buscar en la tabla e imprimir.
@@ -120,7 +95,7 @@ RSI_2 PROC FAR
 
 	FIN_CALC:
 	DEC AH
-	ADD CL, AH 			;; En CL tenemos la posicion del elemento
+	ADD CL, AH 			;; En AL tenemos la posicion del elemento
 	XOR CH, CH 			;; Lo escribimos como 16bits para pasarlo a DI
 	
 	MOV SI, CX
@@ -132,11 +107,10 @@ RSI_2 PROC FAR
 	FIN_DECOD:
 	MOV TEMP[DI], '$'
 	
-	FIN_IMPRIMIR:
+	FIN:
 	MOV WORD PTR FLAG, 0				;; Reseteamos el contador y el flag
 	MOV WORD PTR CONTADOR, 0
 	CALL IMPRIMIR
-	FIN:
 	POP DI SI CX BX AX
 	IRET
 RSI_2 ENDP
@@ -169,9 +143,6 @@ IMPRIMIR PROC NEAR
 	JZ FIN_IMP
 
 	BUCLE_TEMP:
-	MOV AH, 2
-	MOV DL, 7
-	INT 21h
 	CMP WORD PTR FLAG, 1
 	JNZ BUCLE_TEMP
 
@@ -220,120 +191,6 @@ calcularInversa PROC NEAR
 	POP DI SI DX CX BX AX
 	RET
 calcularInversa ENDP
-
-;; TODO Comprobar al instalar desinstalar etc si el programa esta instalado
-
-INSTALL:
-	IN AX, 21h
-	OR AX, 1
-	OUT 21h, AX
-
-	MOV AX, 0 
-	MOV ES, AX
-	MOV AX, OFFSET RSI_2 
-	MOV BX, CS
-
-	MOV ES:[NUM_RUTINA*4], AX 
-	MOV ES:[NUM_RUTINA*4+2], BX 
-
-	MOV CX, OFFSET RSI_1 
-
-	MOV ES:[1Ch*4], CX 
-	MOV ES:[1Ch*4+2], BX
-
-	IN AX, 21h
-	AND AX, 0FFFEh
-	OUT 21h, AX
-	
-	CALL calcularInversa
-	
-	MOV DX, OFFSET INSTALL 
-	INT 27h ; Acaba y deja residente 
-			; PSP, variables y rutina rsi. 	
-			
-UNINSTALL PROC ; Desinstala RSI de INT 40h
-	PUSH AX BX CX DS ES
-	MOV CX, 0
-	MOV DS, CX
-
-	XOR AX, AX
-	CALL CHECK_STATUS 					; Si nuestro programa no esta instalado, no hacemos nada
-	CMP AX, 0
-	JZ FIN_DESINSTALAR
-
-			 									; Segmento de vectores interrupción
-	MOV ES, DS:[NUM_RUTINA*4+2] 				; Lee segmento de RSI
-	MOV BX, ES:[NUM_RUTINA] 					; Lee segmento de entorno del PSP de RSI
-	MOV AH, 49h
-	INT 21h 									; Libera segmento de RSI (es)
-	MOV ES, BX
-	INT 21H 									; Libera segmento de variables de entorno de RSI
-												; Pone a cero vector de interrupción 40h
-	CLI
-	MOV DS:[57h*4], CX ; CX = 0
-	MOV DS:[57h*4+2], CX
-	STI
-
-	FIN_DESINSTALAR:
-	POP ES DS CX BX AX
-	RET
-UNINSTALL ENDP
-
-SHOW_STATUS PROC
-	PUSH AX DX
-
-	CALL CHECK_STATUS
-	CMP AX, 1					;; Si AX==1, el programa esta instalado, si no, no
-	JNZ INF_NO_INSTALADO
-
-	MOV DX, OFFSET PROGRAMA_INSTALADO_STR
-	JMP END_INF_ESTADO
-
-	INF_NO_INSTALADO:
-	MOV DX, OFFSET PROGRAMA_NO_INSTALADO_STR
-
-	END_INF_ESTADO:		;; Imprimos la cadena
-	MOV AH, 9		
-	INT 21h
-
-	;; Informamos de los autores
-	MOV DX, OFFSET INFORMACION_PROGRAMA
-	INT 21h
-
-	POP DX AX
-	RET
-SHOW_STATUS ENDP
-
-;; Devuelve un 1 en AX si esta instalado, un 0 si no
-;; Solo comprueba nuestra rutina, no la rutina 1Ch
-CHECK_STATUS PROC
-	PUSH BX ES DS
-
-	XOR AX, AX
-	MOV ES, AX
-	;; Comprobamos los vectores de interrupcion guardados guardados 
-	MOV AX, ES:[NUM_RUTINA*4 + 2]
-	CMP AX, 0
-	JZ NO_INSTALADO						;; Si AX (segmento) es 0, no esta instalado
-	MOV BX, ES:[NUM_RUTINA*4]
-	CMP BX, 0
-	JZ NO_INSTALADO						;; Si BX (offset) es 0, no esta instalado 
-	
-	SUB BX, 2							;; Comprobamos la firma
-	MOV DS, AX	
-	MOV AX, DS:[BX]						
-	CMP AX, FIRMA
-	JNZ NO_INSTALADO
-	MOV AX, 1	;; El programa esta instalado
-	JMP FIN_PROG_INST
-
-	NO_INSTALADO:
-	MOV AX, 0	;; El programa no esta instalado
-
-	FIN_PROG_INST:
-	POP DS ES BX
-	RET
-CHECK_STATUS ENDP
 
 codigo ENDS
 ; FIN DEL PROGRAMA INDICANDO DONDE COMIENZA LA EJECUCION

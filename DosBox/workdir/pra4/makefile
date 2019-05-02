@@ -20,6 +20,11 @@ p4c.exe: p4c.obj
 p4c.obj: p4c.asm 
  tasm /zi p4c.asm,,p4c.lst
  
+
+p4cprueba.exe: p4cprueba.obj
+ tlink /v p4cprueba
+p4cprueba.obj: p4cprueba.asm 
+ tasm /zi p4cprueba.asm,,p4cprueba.lst
  
 clean:
 	del *.obj

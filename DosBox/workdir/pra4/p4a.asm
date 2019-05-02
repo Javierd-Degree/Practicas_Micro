@@ -109,7 +109,7 @@ RSI PROC FAR
 
 	FIN_CALC:
 	DEC AH
-	ADD CL, AH 			;; En AL tenemos la posicion del elemento
+	ADD CL, AH 			;; En CL tenemos la posicion del elemento
 	XOR CH, CH 			;; Lo escribimos como 16bits para pasarlo a DI
 	
 	MOV DI, CX
@@ -185,13 +185,13 @@ UNINSTALL PROC ; Desinstala RSI de INT 40h
 	MOV DS, CX
 
 	XOR AX, AX
-	CALL CHECK_STATUS 					; Si nuestro programa no esta instalado, no hacemos nada
+	CALL CHECK_STATUS 							; Si nuestro programa no esta instalado, no hacemos nada
 	CMP AX, 0
 	JZ FIN_DESINSTALAR
 
 			 									; Segmento de vectores interrupción
 	MOV ES, DS:[NUM_RUTINA*4+2] 				; Lee segmento de RSI
-	MOV BX, ES:[NUM_RUTINA] 					; Lee segmento de entorno del PSP de RSI
+	MOV BX, ES:[2Ch] 							; Lee segmento de entorno del PSP de RSI
 	MOV AH, 49h
 	INT 21h 									; Libera segmento de RSI (es)
 	MOV ES, BX
