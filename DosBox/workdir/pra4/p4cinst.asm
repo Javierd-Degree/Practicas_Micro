@@ -63,7 +63,7 @@ INDEX DW 0
 TEMP DB 256 dup(?)
 sign DB "KK"
 
-; Rutina de servicio a la interrupción
+; Rutina de servicio a la interrupción 57h
 RSI_2 PROC FAR
 	PUSH AX BX CX SI DI
 
@@ -83,18 +83,18 @@ RSI_2 PROC FAR
 	MOV DI,  DS:[BX][SI]	;; Leemos el caracter en DI
 	AND DI, 00FFh			;; Solo queremos leer los 8bytes del primer caracter
 	CMP DI, 13				;; En este caso, es una cadena leida de teclado, acaba en 13
-	JZ FIN_COD
+	JZ FIN_COD   	
 	ADD DI, DI
 	MOV DX, WORD PTR matrizInversa[DI]		;; Cargamos en DL la fila, en DH la columna
 	MOV DI, SI
-	ADD DI, DI 				;; Guardamos el los dos caracteres de la codificacion
-	MOV WORD PTR TEMP[DI], DX
-	INC SI
-	JMP BUCLE_CODIFICACION
+	ADD DI, DI 	
+	MOV WORD PTR TEMP[DI], DX 				;; Guardamos en TEMP las coordenadas para posteriormente imprimirlas
+	INC SI 									;; Incrementamos el contador
+	JMP BUCLE_CODIFICACION 					;; Saltamos al bucle para codificar el siguiente caracter.
 
 	FIN_COD:
 	ADD SI, SI
-	MOV TEMP[SI], '$'
+	MOV TEMP[SI], '$' 		;; Añadimos un '$' al final de TEMP para indicar que es el final de la cadena.
 	JMP FIN_IMPRIMIR
 	
 	DECODIFICACION:
@@ -135,22 +135,23 @@ RSI_2 PROC FAR
 	FIN_IMPRIMIR:
 	MOV WORD PTR FLAG, 0				;; Reseteamos el contador y el flag
 	MOV WORD PTR CONTADOR, 0
-	CALL IMPRIMIR
+	CALL IMPRIMIR  						;; Llamamos a la funcion que imprime la cadena.
 	FIN:
 	POP DI SI CX BX AX
 	IRET
 RSI_2 ENDP
 
+;; Rutina de servicio a la interrupción 1Ch
 RSI_1 PROC FAR	
 	PUSH AX
 	MOV AX, CONTADOR
 	INC AX
-	MOV CONTADOR, AX
-	CMP AX, 18
-	JNE FIN_INT
+	MOV CONTADOR, AX 		;; Incrementamos el contador.
+	CMP AX, 18 				;; Cuando el contador lega a 18 ha pasado aproximadamente un segundo.
+	JNE FIN_INT 			;; Si no ha pasado 1 segundo terminamos.
 	
-	MOV WORD PTR FLAG, 1 
-	MOV WORD PTR CONTADOR, 0
+	MOV WORD PTR FLAG, 1 			;; Si ha pasado un segundo ponemos el falg a 1 para habilitar la impresión.
+	MOV WORD PTR CONTADOR, 0		;; Reseteamos el contador.
 
 	FIN_INT:
 	POP AX
@@ -160,27 +161,32 @@ RSI_1 ENDP
 IMPRIMIR PROC NEAR
 	PUSH SI DX 
 
-	XOR SI, SI
-	MOV AH, 2h
+	XOR SI, SI 			;; Ponemos SI a 0.
+	MOV AH, 2h 			;; Ponemos en AH 2h (instrucción de impresión).
 
 	BUCLE_IMP:
-	MOV DL, TEMP[SI]
-	CMP DL, '$'
+	MOV DH, TEMP[SI] 	;; Guardamos en DH el siguente caracter a imprimir.
+	CMP DH, '$'			;; Comprobamos si es '$' pues este caracter indica el final de la cadena.
 	JZ FIN_IMP
 
 	BUCLE_TEMP:
-	MOV AH, 2
-	MOV DL, 7
-	INT 21h
-	CMP WORD PTR FLAG, 1
-	JNZ BUCLE_TEMP
+	MOV DL, 7					
+	INT 21h 					;; Imprimimos el caracter con ASCII 7 (nada) para dar tiempo a la interrupción 1Ch
+	CMP WORD PTR FLAG, 1		;; Comprobamos si el FLAG que habilita la impresión está a 1.
+	JNZ BUCLE_TEMP				;; Si no está a 1 saltamos de nuevo al bucle para no imprimir
 
-	MOV FLAG, 0
+	MOV WORD PTR FLAG, 0 		;; Si está a 1 lo ponemos a 0 y continuamos la impresión.
+	MOV DL, DH 					;; Pasamos el caracter a imprimir de DH a DL para imprimirlo.
 	INT 21h
-	INC SI
-	JMP BUCLE_IMP
+	INC SI 						;; Imprimimos el caracter
+	JMP BUCLE_IMP 				;; Saltamos al bucle de impresión para repetir el proceso con el siguiente caracter.
 
 	FIN_IMP:
+	MOV DL, 13
+	INT 21H
+	MOV DL, 10
+	INT 21H 		;; Antes de acabar imprimimos un salto de linea.
+
 	POP DX SI 
 	RET
 IMPRIMIR ENDP
